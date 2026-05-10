@@ -14,5 +14,5 @@ RUN python manage.py collectstatic --noinput
 
 EXPOSE 8000
 
-# Single worker + increased timeout fixes memory kill on free 512MB tier
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "1", "--timeout", "120", "--preload", "stockai.wsgi:application"]
+# migrate runs on every container start — free tier compatible
+CMD ["sh", "-c", "python manage.py migrate && gunicorn --bind 0.0.0.0:8000 --workers 1 --timeout 120 stockai.wsgi:application"]
