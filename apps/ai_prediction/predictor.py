@@ -1,16 +1,17 @@
-import numpy as np
-from sklearn.linear_model import LinearRegression
-from sklearn.neural_network import MLPRegressor
-from sklearn.preprocessing import MinMaxScaler
-
 def prepare_data(prices, lookback=10):
+    import numpy as np
     X, y = [], []
     for i in range(lookback, len(prices)):
         X.append(prices[i-lookback:i])
         y.append(prices[i])
     return np.array(X), np.array(y)
 
+
 def predict_linear(prices):
+    # ── Lazy imports — only load sklearn when this function is called ──────────
+    # This keeps startup RAM low on Render free tier (512MB)
+    import numpy as np
+    from sklearn.linear_model import LinearRegression
     try:
         prices = np.array(prices)
         X = np.arange(len(prices)).reshape(-1, 1)
@@ -25,16 +26,21 @@ def predict_linear(prices):
         confidence = min(95, max(55, 75 + abs(change_pct) * 2))
         return {
             'predicted_price': round(float(predicted), 2),
-            'current_price': round(float(current), 2),
-            'change_pct': round(float(change_pct), 2),
-            'trend': trend,
-            'confidence': round(float(confidence), 1),
-            'model': 'Linear Regression',
+            'current_price':   round(float(current), 2),
+            'change_pct':      round(float(change_pct), 2),
+            'trend':           trend,
+            'confidence':      round(float(confidence), 1),
+            'model':           'Linear Regression',
         }
-    except Exception as e:
+    except Exception:
         return None
 
+
 def predict_lstm(prices):
+    # ── Lazy imports ───────────────────────────────────────────────────────────
+    import numpy as np
+    from sklearn.neural_network import MLPRegressor
+    from sklearn.preprocessing import MinMaxScaler
     try:
         scaler = MinMaxScaler()
         prices_arr = np.array(prices).reshape(-1, 1)
@@ -58,19 +64,18 @@ def predict_lstm(prices):
         confidence = min(92, max(60, 78 + abs(change_pct) * 1.5))
         return {
             'predicted_price': round(float(predicted), 2),
-            'current_price': round(float(current), 2),
-            'change_pct': round(float(change_pct), 2),
-            'trend': trend,
-            'confidence': round(float(confidence), 1),
-            'model': 'LSTM (Neural Network)',
+            'current_price':   round(float(current), 2),
+            'change_pct':      round(float(change_pct), 2),
+            'trend':           trend,
+            'confidence':      round(float(confidence), 1),
+            'model':           'LSTM (Neural Network)',
         }
-    except Exception as e:
+    except Exception:
         return None
 
+
 def get_prediction(prices):
-    linear = predict_linear(prices)
-    lstm = predict_lstm(prices)
     return {
-        'linear': linear,
-        'lstm': lstm,
+        'linear': predict_linear(prices),
+        'lstm':   predict_lstm(prices),
     }
