@@ -14,4 +14,5 @@ RUN python manage.py collectstatic --noinput
 
 EXPOSE 8000
 
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "2", "stockai.wsgi:application"]
+# Single worker + increased timeout fixes memory kill on free 512MB tier
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "1", "--timeout", "120", "--preload", "stockai.wsgi:application"]
