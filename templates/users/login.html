@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/auth.css' %}">
+<style>
+nav.navbar { display:none !important; }
+.sidebar { display:none !important; }
+.main-content { margin-left:0 !important; margin-top:0 !important; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+    <div class="orb-bg">
+        <div class="floating-orb orb1"></div>
+        <div class="floating-orb orb2"></div>
+        <div class="floating-orb orb3"></div>
+    </div>
+
+    <div class="auth-box">
+        <div class="auth-header">
+            <div class="logo-icon">
+                <i class="fas fa-chart-line" style="font-size:28px; color:#0B0C10;"></i>
+            </div>
+            <h1 class="auth-title">StockAI Pro</h1>
+            <p class="auth-subtitle">AI-Powered Stock Intelligence</p>
+        </div>
+
+        <div class="glass-card">
+            <h4 style="color:#fff; font-weight:600; margin-bottom:6px;">Welcome back</h4>
+            <p style="color:#888; font-size:13px; margin-bottom:24px;">Sign in to your account</p>
+
+            <form method="POST">
+                {% csrf_token %}
+                <div class="input-group-custom">
+                    <i class="fas fa-user input-icon"></i>
+                    <input type="text" name="username" placeholder="Username" required class="custom-input">
+                </div>
+                <div class="input-group-custom">
+                    <i class="fas fa-lock input-icon"></i>
+                    <input type="password" name="password" placeholder="Password" required class="custom-input">
+                </div>
+                {% if messages %}
+                {% for message in messages %}
+                <div class="error-text">{{ message }}</div>
+                {% endfor %}
+                {% endif %}
+                <button type="submit" class="submit-btn mt-2">
+                    <span>Sign In</span>
+                    <i class="fas fa-arrow-right ms-2"></i>
+                </button>
+            </form>
+
+            <div class="auth-footer">
+                <p>Don't have an account? <a href="{% url 'register' %}">Create one</a></p>
+            </div>
+        </div>
+
+        <div style="display:flex; justify-content:center; gap:24px; margin-top:24px;">
+            <div class="stat-pill"><i class="fas fa-shield-alt me-1"></i> Secure</div>
+            <div class="stat-pill"><i class="fas fa-bolt me-1"></i> Real-time</div>
+            <div class="stat-pill"><i class="fas fa-robot me-1"></i> AI Powered</div>
+        </div>
+    </div>
+</div>
+{% endblock %}

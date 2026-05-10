@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+{% block port_active %}active{% endblock %}
+
+{% block content %}
+<div class="section-header mb-4">
+    <div>
+        <h4 style="color:#fff; margin:0; font-size:20px; font-weight:700;">
+            <span style="color:var(--cyan);">⬡</span> Trade History
+        </h4>
+        <p style="color:#888; font-size:12px; margin:2px 0 0;">All your transactions</p>
+    </div>
+    <a href="{% url 'portfolio' %}" class="btn-cyan" style="text-decoration:none; font-size:13px;">
+        <i class="fas fa-arrow-left me-1"></i>Back
+    </a>
+</div>
+
+<div class="chart-container">
+    {% if transactions %}
+    <table class="stock-table">
+        <thead>
+            <tr>
+                <th>Type</th>
+                <th>Symbol</th>
+                <th>Company</th>
+                <th>Qty</th>
+                <th>Price</th>
+                <th>Total</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for tx in transactions %}
+            <tr>
+                <td>
+                    <span class="{% if tx.transaction_type == 'BUY' %}badge-positive{% else %}badge-negative{% endif %}">
+                        {{ tx.transaction_type }}
+                    </span>
+                </td>
+                <td class="stock-symbol">{{ tx.symbol }}</td>
+                <td style="color:#888; font-size:13px;">{{ tx.company_name|truncatechars:20 }}</td>
+                <td style="color:#fff;">{{ tx.quantity }}</td>
+                <td style="color:#fff;">₹{{ tx.price }}</td>
+                <td style="color:var(--cyan); font-weight:600;">₹{{ tx.total_value }}</td>
+                <td style="color:#888; font-size:12px;">{{ tx.date }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div style="text-align:center; padding:60px;">
+        <i class="fas fa-history" style="font-size:48px; color:#2A3545; margin-bottom:16px;"></i>
+        <p style="color:#888;">No transactions yet</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

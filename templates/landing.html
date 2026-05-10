@@ -1,0 +1,372 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StockAI Pro — AI-Powered Stock Intelligence</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0B0C10;
+            --bg-panel: #1F2833;
+            --bg-hover: #2A3545;
+            --cyan: #66FCF1;
+            --teal: #45A29E;
+            --crimson: #C3073F;
+            --text-main: #C5C6C7;
+            --violet: #C8A0FF;
+            --amber: #F5A623;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background: var(--bg-primary); color: var(--text-main); font-family: 'Segoe UI', sans-serif; overflow-x:hidden; }
+        .navbar { background: rgba(31,40,51,0.95); backdrop-filter:blur(10px); border-bottom:1px solid rgba(102,252,241,0.1); padding:16px 40px; position:fixed; top:0; width:100%; z-index:999; }
+        .navbar-brand { color: var(--cyan) !important; font-weight:700; font-size:22px; text-decoration:none; }
+        .nav-link { color: var(--text-main) !important; margin:0 12px; text-decoration:none; font-size:14px; transition:color 0.2s; }
+        .nav-link:hover { color: var(--cyan) !important; }
+        .btn-login { background:transparent; border:1px solid var(--cyan); color:var(--cyan); padding:8px 20px; border-radius:8px; font-size:14px; text-decoration:none; transition:all 0.2s; }
+        .btn-login:hover { background:var(--cyan); color:#0B0C10; }
+        .btn-register { background:var(--cyan); color:#0B0C10; padding:8px 20px; border-radius:8px; font-size:14px; font-weight:600; text-decoration:none; transition:all 0.2s; margin-left:8px; }
+        .btn-register:hover { background:var(--teal); color:#fff; }
+        .hero { min-height:100vh; display:flex; align-items:center; justify-content:center; text-align:center; padding:100px 20px 60px; position:relative; overflow:hidden; }
+        .hero-orb { position:absolute; border-radius:50%; filter:blur(100px); opacity:0.12; }
+        .orb1 { width:600px; height:600px; background:#66FCF1; top:-200px; left:-200px; animation:floatOrb 10s ease-in-out infinite; }
+        .orb2 { width:400px; height:400px; background:#C8A0FF; bottom:-100px; right:-100px; animation:floatOrb 8s ease-in-out infinite reverse; }
+        @keyframes floatOrb { 0%,100%{transform:translate(0,0);}50%{transform:translate(40px,-40px);} }
+        .hero-badge { background:rgba(102,252,241,0.1); border:1px solid rgba(102,252,241,0.2); color:var(--cyan); padding:6px 16px; border-radius:20px; font-size:12px; font-weight:600; display:inline-block; margin-bottom:24px; animation:fadeIn 0.8s ease-out; }
+        .hero-title { font-size:64px; font-weight:800; line-height:1.1; margin-bottom:20px; animation:fadeIn 0.8s ease-out 0.2s both; }
+        .hero-title span { color:var(--cyan); }
+        .hero-subtitle { font-size:18px; color:#888; max-width:600px; margin:0 auto 40px; line-height:1.7; animation:fadeIn 0.8s ease-out 0.4s both; }
+        .hero-buttons { display:flex; gap:16px; justify-content:center; animation:fadeIn 0.8s ease-out 0.6s both; }
+        .btn-primary-hero { background:linear-gradient(135deg,#66FCF1,#45A29E); color:#0B0C10; padding:14px 32px; border-radius:12px; font-size:16px; font-weight:700; text-decoration:none; transition:transform 0.2s,box-shadow 0.2s; }
+        .btn-primary-hero:hover { transform:translateY(-2px); box-shadow:0 8px 32px rgba(102,252,241,0.3); color:#0B0C10; }
+        .btn-secondary-hero { background:transparent; border:1px solid rgba(102,252,241,0.3); color:var(--text-main); padding:14px 32px; border-radius:12px; font-size:16px; text-decoration:none; transition:all 0.2s; }
+        .btn-secondary-hero:hover { border-color:var(--cyan); color:var(--cyan); }
+        @keyframes fadeIn { from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);} }
+        .stats-section { padding:60px 40px; background:var(--bg-panel); border-top:1px solid var(--bg-hover); border-bottom:1px solid var(--bg-hover); }
+        .stat-item { text-align:center; }
+        .stat-number { font-size:36px; font-weight:800; color:var(--cyan); }
+        .stat-label { font-size:13px; color:#888; margin-top:4px; }
+        .features-section { padding:80px 40px; }
+        .section-heading { text-align:center; margin-bottom:50px; }
+        .section-heading h2 { font-size:36px; font-weight:700; color:#fff; margin-bottom:12px; }
+        .section-heading p { color:#888; font-size:16px; }
+        .feature-card { background:var(--bg-panel); border:1px solid var(--bg-hover); border-radius:16px; padding:28px; height:100%; transition:transform 0.2s,border-color 0.2s,box-shadow 0.2s; position:relative; overflow:hidden; }
+        .feature-card::before { content:''; position:absolute; top:0; left:0; width:100%; height:3px; }
+        .feature-card.cyan::before { background:linear-gradient(90deg,#66FCF1,transparent); }
+        .feature-card.violet::before { background:linear-gradient(90deg,#C8A0FF,transparent); }
+        .feature-card.amber::before { background:linear-gradient(90deg,#F5A623,transparent); }
+        .feature-card.teal::before { background:linear-gradient(90deg,#45A29E,transparent); }
+        .feature-card.blue::before { background:linear-gradient(90deg,#3B82F6,transparent); }
+        .feature-card.crimson::before { background:linear-gradient(90deg,#C3073F,transparent); }
+        .feature-card:hover { transform:translateY(-6px); border-color:rgba(102,252,241,0.2); box-shadow:0 12px 40px rgba(0,0,0,0.3); }
+        .feature-icon { width:52px; height:52px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:22px; margin-bottom:16px; }
+        .feature-title { font-size:17px; font-weight:600; color:#fff; margin-bottom:8px; }
+        .feature-desc { font-size:13px; color:#888; line-height:1.7; }
+        .ticker-section { background:#111318; border-top:1px solid var(--bg-hover); border-bottom:1px solid var(--bg-hover); padding:12px 0; overflow:hidden; }
+        .ticker-move { display:flex; gap:40px; animation:tickerScroll 25s linear infinite; white-space:nowrap; width:max-content; }
+        @keyframes tickerScroll { 0%{transform:translateX(0);}100%{transform:translateX(-50%);} }
+        .ticker-item { display:inline-flex; align-items:center; gap:8px; font-size:13px; font-weight:600; }
+        .cta-section { padding:80px 40px; text-align:center; }
+        .cta-card { background:linear-gradient(135deg,rgba(102,252,241,0.08),rgba(200,160,255,0.08)); border:1px solid rgba(102,252,241,0.15); border-radius:24px; padding:60px 40px; max-width:700px; margin:0 auto; }
+        .cta-title { font-size:36px; font-weight:700; color:#fff; margin-bottom:16px; }
+        .cta-sub { color:#888; font-size:16px; margin-bottom:32px; }
+        .footer { background:var(--bg-panel); border-top:1px solid var(--bg-hover); padding:40px; text-align:center; }
+        .footer p { color:#888; font-size:13px; }
+        ::-webkit-scrollbar { width:6px; }
+        ::-webkit-scrollbar-track { background:var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background:var(--bg-hover); border-radius:3px; }
+
+        /* ABOUT SECTION */
+        .about-section { padding:80px 40px; background:var(--bg-panel); }
+        .dev-card {
+            background:var(--bg-primary);
+            border:1px solid var(--bg-hover);
+            border-radius:20px;
+            padding:36px 28px;
+            text-align:center;
+            height:100%;
+            position:relative;
+            overflow:hidden;
+            transition:transform 0.3s, box-shadow 0.3s;
+        }
+        .dev-card:hover { transform:translateY(-8px); box-shadow:0 16px 48px rgba(0,0,0,0.4); }
+        .dev-card::before { content:''; position:absolute; top:0; left:0; width:100%; height:3px; }
+        .dev-card.mahek::before { background:linear-gradient(90deg,#66FCF1,transparent); }
+        .dev-card.kavya::before { background:linear-gradient(90deg,#C8A0FF,transparent); }
+        .dev-photo {
+            width:120px; height:120px;
+            border-radius:50%;
+            object-fit:cover;
+            margin-bottom:20px;
+            transition:transform 0.3s;
+        }
+        .dev-card.mahek .dev-photo { border:3px solid #66FCF1; box-shadow:0 0 20px rgba(102,252,241,0.3); }
+        .dev-card.kavya .dev-photo { border:3px solid #C8A0FF; box-shadow:0 0 20px rgba(200,160,255,0.3); }
+        .dev-card:hover .dev-photo { transform:scale(1.05); }
+        .dev-name { font-size:20px; font-weight:700; color:#fff; margin-bottom:4px; }
+        .dev-role { font-size:13px; margin-bottom:18px; }
+        .dev-info { font-size:13px; color:#888; line-height:2.2; text-align:left; margin-bottom:18px; }
+        .dev-tag {
+            display:inline-block;
+            padding:4px 12px;
+            border-radius:20px;
+            font-size:11px;
+            margin:3px;
+        }
+        .tag-cyan { background:rgba(102,252,241,0.1); border:1px solid rgba(102,252,241,0.2); color:#66FCF1; }
+        .tag-violet { background:rgba(200,160,255,0.1); border:1px solid rgba(200,160,255,0.2); color:#C8A0FF; }
+        .project-info-box {
+            background:var(--bg-hover);
+            border:1px solid rgba(102,252,241,0.1);
+            border-radius:16px;
+            padding:28px 32px;
+            margin-top:40px;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg">
+    <a class="navbar-brand" href="/"><i class="fas fa-chart-line me-2"></i>StockAI Pro</a>
+    <div class="collapse navbar-collapse">
+        <ul class="navbar-nav ms-auto align-items-center">
+            <li><a class="nav-link" href="#features">Features</a></li>
+            <li><a class="nav-link" href="#about">About</a></li>
+            <a href="{% url 'login' %}" class="btn-login">Sign In</a>
+            <a href="{% url 'register' %}" class="btn-register">Get Started</a>
+        </ul>
+    </div>
+</nav>
+
+<div class="ticker-section" style="margin-top:70px;">
+    <div class="ticker-move">
+        <span class="ticker-item"><span style="color:#fff;">RELIANCE</span><span style="color:#888;">₹1365</span><span style="color:#45A29E;">▲1.62%</span></span>
+        <span class="ticker-item"><span style="color:#fff;">TCS</span><span style="color:#888;">₹2581</span><span style="color:#45A29E;">▲0.18%</span></span>
+        <span class="ticker-item"><span style="color:#fff;">HDFCBANK</span><span style="color:#888;">₹799</span><span style="color:#45A29E;">▲0.56%</span></span>
+        <span class="ticker-item"><span style="color:#fff;">INFY</span><span style="color:#888;">₹1318</span><span style="color:#C3073F;">▼0.04%</span></span>
+        <span class="ticker-item"><span style="color:#fff;">WIPRO</span><span style="color:#888;">₹204</span><span style="color:#C3073F;">▼2.83%</span></span>
+        <span class="ticker-item"><span style="color:#fff;">NIFTY 50</span><span style="color:#888;">24,125</span><span style="color:#45A29E;">▲0.45%</span></span>
+        <span class="ticker-item"><span style="color:#fff;">SENSEX</span><span style="color:#888;">79,408</span><span style="color:#45A29E;">▲0.38%</span></span>
+        <span class="ticker-item"><span style="color:#fff;">RELIANCE</span><span style="color:#888;">₹1365</span><span style="color:#45A29E;">▲1.62%</span></span>
+        <span class="ticker-item"><span style="color:#fff;">TCS</span><span style="color:#888;">₹2581</span><span style="color:#45A29E;">▲0.18%</span></span>
+        <span class="ticker-item"><span style="color:#fff;">HDFCBANK</span><span style="color:#888;">₹799</span><span style="color:#45A29E;">▲0.56%</span></span>
+        <span class="ticker-item"><span style="color:#fff;">INFY</span><span style="color:#888;">₹1318</span><span style="color:#C3073F;">▼0.04%</span></span>
+        <span class="ticker-item"><span style="color:#fff;">WIPRO</span><span style="color:#888;">₹204</span><span style="color:#C3073F;">▼2.83%</span></span>
+        <span class="ticker-item"><span style="color:#fff;">NIFTY 50</span><span style="color:#888;">24,125</span><span style="color:#45A29E;">▲0.45%</span></span>
+        <span class="ticker-item"><span style="color:#fff;">SENSEX</span><span style="color:#888;">79,408</span><span style="color:#45A29E;">▲0.38%</span></span>
+    </div>
+</div>
+
+<section class="hero">
+    <div class="hero-orb orb1"></div>
+    <div class="hero-orb orb2"></div>
+    <div style="position:relative; z-index:1;">
+        <div class="hero-badge"><i class="fas fa-robot me-2"></i>AI-Powered Stock Intelligence</div>
+        <h1 class="hero-title">Trade Smarter with<br><span>AI-Driven</span> Insights</h1>
+        <p class="hero-subtitle">Real-time stock data, ML predictions, sentiment analysis, and an intelligent AI assistant — all in one powerful platform built for Indian markets.</p>
+        <div class="hero-buttons">
+            <a href="{% url 'register' %}" class="btn-primary-hero"><i class="fas fa-rocket me-2"></i>Start Free Today</a>
+            <a href="{% url 'login' %}" class="btn-secondary-hero"><i class="fas fa-sign-in-alt me-2"></i>Sign In</a>
+        </div>
+    </div>
+</section>
+
+<section class="stats-section">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-6 col-md-3">
+                <div class="stat-item">
+                    <div class="stat-number">6+</div>
+                    <div class="stat-label">AI Modules</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-item">
+                    <div class="stat-number">Real-time</div>
+                    <div class="stat-label">NSE/BSE Data</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-item">
+                    <div class="stat-number">95%</div>
+                    <div class="stat-label">Prediction Accuracy</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-item">
+                    <div class="stat-number">24/7</div>
+                    <div class="stat-label">AI Assistant</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="features-section" id="features">
+    <div class="container">
+        <div class="section-heading">
+            <h2>Everything You Need to Trade Smart</h2>
+            <p>Six powerful modules working together for complete stock market intelligence</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="feature-card cyan">
+                    <div class="feature-icon" style="background:rgba(102,252,241,0.1);">
+                        <i class="fas fa-chart-line" style="color:#66FCF1;"></i>
+                    </div>
+                    <div class="feature-title">Live Stock Dashboard</div>
+                    <div class="feature-desc">Real-time NSE/BSE prices, candlestick charts, RSI & Moving Average indicators, and personalized watchlist.</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card violet">
+                    <div class="feature-icon" style="background:rgba(200,160,255,0.1);">
+                        <i class="fas fa-robot" style="color:#C8A0FF;"></i>
+                    </div>
+                    <div class="feature-title">AI Chat Assistant</div>
+                    <div class="feature-desc">Powered by Groq AI — answers only stock market queries. Ask about trends, strategies, and market insights.</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card amber">
+                    <div class="feature-icon" style="background:rgba(245,166,35,0.1);">
+                        <i class="fas fa-brain" style="color:#F5A623;"></i>
+                    </div>
+                    <div class="feature-title">AI Price Prediction</div>
+                    <div class="feature-desc">Linear Regression and Neural Network models predict next-day prices with bullish/bearish trend and confidence score.</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card teal">
+                    <div class="feature-icon" style="background:rgba(69,162,158,0.1);">
+                        <i class="fas fa-briefcase" style="color:#45A29E;"></i>
+                    </div>
+                    <div class="feature-title">Portfolio Tracker</div>
+                    <div class="feature-desc">Track all your holdings, monitor real-time P&L, view transaction history, and get AI-driven suggestions.</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card blue">
+                    <div class="feature-icon" style="background:rgba(59,130,246,0.1);">
+                        <i class="fas fa-newspaper" style="color:#3B82F6;"></i>
+                    </div>
+                    <div class="feature-title">Sentiment Analysis</div>
+                    <div class="feature-desc">Fetch real-time financial news, analyze positive/negative sentiment using NLP, and link it to stock movements.</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card crimson">
+                    <div class="feature-icon" style="background:rgba(195,7,63,0.1);">
+                        <i class="fas fa-bell" style="color:#C3073F;"></i>
+                    </div>
+                    <div class="feature-title">Smart Alerts</div>
+                    <div class="feature-desc">Set price alerts for any stock. Get notified when prices cross your target — above or below threshold.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ABOUT SECTION -->
+<section class="about-section" id="about">
+    <div class="container">
+        <div class="section-heading">
+            <h2 style="color:#fff;">Meet the Developers</h2>
+            <p>Final year project built with passion for AI and Indian stock markets</p>
+        </div>
+
+        <div class="row g-4 justify-content-center">
+            <div class="col-md-4">
+                <div class="dev-card mahek">
+                    <img src="{% static 'img/mahek.jpeg' %}" class="dev-photo" alt="Mahek Dabhi">
+                    <div class="dev-name">Mahek Dabhi</div>
+                    <div class="dev-role" style="color:#66FCF1;">Python Developer</div>
+                    <div class="dev-info">
+                        <div><i class="fas fa-envelope me-2" style="color:#66FCF1;"></i>mahekdabhi1705@gmail.com</div>
+                        <div><i class="fas fa-phone me-2" style="color:#66FCF1;"></i>+91 9016432332</div>
+                    </div>
+                    <div>
+                        <span class="dev-tag tag-cyan">Django</span>
+                        <span class="dev-tag tag-cyan">Python</span>
+                        <span class="dev-tag tag-cyan">AI/ML</span> 
+                        <span class="dev-tag tag-cyan">PostgreSQL</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="dev-card kavya">
+                    <img src="{% static 'img/kavya.jpeg' %}" class="dev-photo" alt="Kavya Parmar">
+                    <div class="dev-name">Kavya Parmar</div>
+                    <div class="dev-role" style="color:#C8A0FF;">Backend Developer</div>
+                    <div class="dev-info">
+                        <div><i class="fas fa-envelope me-2" style="color:#C8A0FF;"></i>parmarkavya35@gmail.com</div>
+                        <div><i class="fas fa-phone me-2" style="color:#C8A0FF;"></i>+91 6354268461</div>
+                    </div>
+                    <div>
+                        <span class="dev-tag tag-violet">Django</span>
+                        <span class="dev-tag tag-violet">Python</span>
+                        <span class="dev-tag tag-violet">PostgreSQL</span>
+                        <span class="dev-tag tag-violet">CSS</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="project-info-box">
+            <h5 style="color:#fff; font-weight:700; margin-bottom:20px; text-align:center;">
+                <i class="fas fa-graduation-cap me-2" style="color:#F5A623;"></i>Project Details
+            </h5>
+            <div class="row g-3 justify-content-center text-center">
+                
+                <div class="col-6 col-md-2">
+                    <i class="fas fa-code" style="color:#C8A0FF; font-size:20px; margin-bottom:8px; display:block;"></i>
+                    <div style="font-size:12px; color:#888;">Django + AI</div>
+                </div>
+                <div class="col-6 col-md-2">
+                    <i class="fas fa-database" style="color:#F5A623; font-size:20px; margin-bottom:8px; display:block;"></i>
+                    <div style="font-size:12px; color:#888;">PostgreSQL</div>
+                </div>
+                <div class="col-6 col-md-2">
+                    <i class="fas fa-robot" style="color:#45A29E; font-size:20px; margin-bottom:8px; display:block;"></i>
+                    <div style="font-size:12px; color:#888;">Groq AI + ML</div>
+                </div>
+                <div class="col-6 col-md-2">
+                    <i class="fas fa-chart-line" style="color:#3B82F6; font-size:20px; margin-bottom:8px; display:block;"></i>
+                    <div style="font-size:12px; color:#888;">Yahoo Finance</div>
+                </div>
+                <div class="col-6 col-md-2">
+                    <i class="fas fa-newspaper" style="color:#FF6B6B; font-size:20px; margin-bottom:8px; display:block;"></i>
+                    <div style="font-size:12px; color:#888;">NewsAPI</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="cta-section">
+    <div class="cta-card">
+        <h2 class="cta-title">Ready to Trade Smarter?</h2>
+        <p class="cta-sub">Join StockAI Pro and get access to AI-powered stock intelligence for Indian markets.</p>
+        <a href="{% url 'register' %}" class="btn-primary-hero" style="font-size:15px; padding:14px 40px;">
+            <i class="fas fa-rocket me-2"></i>Create Free Account
+        </a>
+    </div>
+</section>
+
+<footer class="footer">
+    <p><i class="fas fa-chart-line me-2" style="color:var(--cyan);"></i><strong style="color:var(--cyan);">StockAI Pro</strong> — AI-Based Stock Analysis & Decision Support System</p>
+    <p style="margin-top:8px;">Built with Django · PostgreSQL · Groq AI · Yahoo Finance API</p>
+    <div style="margin-top:20px; display:flex; justify-content:center; gap:32px; flex-wrap:wrap; font-size:13px;">
+        <span><i class="fas fa-user me-1" style="color:#66FCF1;"></i><span style="color:#fff;">Mahek Dabhi</span></span>
+        <span><i class="fas fa-envelope me-1" style="color:#66FCF1;"></i>mahekdabhi1705@gmail.com</span>
+        <span><i class="fas fa-user me-1" style="color:#C8A0FF;"></i><span style="color:#fff;">Kavya Parmar</span></span>
+        <span><i class="fas fa-envelope me-1" style="color:#C8A0FF;"></i>parmarkavya35@gmail.com</span>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

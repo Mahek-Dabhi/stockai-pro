@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+<style>
+.fade-in { animation: fadeIn 0.6s ease-out forwards; opacity:0; }
+.fade-in-1 { animation-delay:0.1s; }
+.fade-in-2 { animation-delay:0.2s; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);} }
+.avatar-circle {
+    width: 80px; height: 80px;
+    background: linear-gradient(135deg, #66FCF1, #C8A0FF);
+    border-radius: 20px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px; font-weight: 700; color: #0B0C10;
+}
+.profile-input {
+    width: 100%;
+    background: #111318;
+    border: 1px solid var(--bg-hover);
+    color: var(--text-main);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+    margin-bottom: 12px;
+}
+.profile-input:focus { border-color: var(--cyan); }
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(42,53,69,0.5);
+    font-size: 14px;
+}
+.info-row:last-child { border-bottom: none; }
+</style>
+{% endblock %}
+{% block prof_active %}active{% endblock %}
+
+{% block content %}
+<div class="section-header fade-in fade-in-1">
+    <div>
+        <h4 style="color:#fff; margin:0; font-size:20px; font-weight:700;">
+            <span style="color:var(--cyan);">⬡</span> Profile
+        </h4>
+        <p style="color:#888; font-size:12px; margin:2px 0 0;">Manage your account</p>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-4 fade-in fade-in-1">
+        <div class="chart-container text-center">
+            <div class="avatar-circle mx-auto mb-3">
+                {{ request.user.username|slice:":2"|upper }}
+            </div>
+            <h5 style="color:#fff; margin-bottom:4px;">{{ request.user.get_full_name|default:request.user.username }}</h5>
+            <p style="color:#888; font-size:13px; margin-bottom:16px;">{{ request.user.email }}</p>
+            <span class="indicator-badge">
+                <i class="fas fa-shield-alt me-1"></i>Verified Member
+            </span>
+
+            <div style="margin-top:20px; text-align:left;">
+                <div class="info-row">
+                    <span style="color:#888;">Username</span>
+                    <span style="color:#fff;">{{ request.user.username }}</span>
+                </div>
+                <div class="info-row">
+                    <span style="color:#888;">Member Since</span>
+                    <span style="color:#fff;">{{ request.user.date_joined|date:"M Y" }}</span>
+                </div>
+                <div class="info-row">
+                    <span style="color:#888;">Last Login</span>
+                    <span style="color:#fff;">{{ request.user.last_login|date:"d M Y" }}</span>
+                </div>
+                <div class="info-row">
+                    <span style="color:#888;">Phone</span>
+                    <span style="color:#fff;">{{ profile.phone|default:"Not set" }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8 fade-in fade-in-2">
+        <div class="chart-container">
+            <div class="section-title mb-3">
+                <i class="fas fa-edit me-2" style="color:var(--cyan);"></i>Edit Profile
+            </div>
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-6">
+                        <label style="font-size:12px; color:#888; margin-bottom:4px; display:block;">First Name</label>
+                        <input type="text" name="first_name" value="{{ request.user.first_name }}" class="profile-input">
+                    </div>
+                    <div class="col-6">
+                        <label style="font-size:12px; color:#888; margin-bottom:4px; display:block;">Last Name</label>
+                        <input type="text" name="last_name" value="{{ request.user.last_name }}" class="profile-input">
+                    </div>
+                </div>
+                <label style="font-size:12px; color:#888; margin-bottom:4px; display:block;">Email</label>
+                <input type="email" name="email" value="{{ request.user.email }}" class="profile-input">
+                <label style="font-size:12px; color:#888; margin-bottom:4px; display:block;">Phone</label>
+                <input type="text" name="phone" value="{{ profile.phone }}" placeholder="+91 XXXXX XXXXX" class="profile-input">
+                <button type="submit" class="btn-cyan" style="padding:10px 24px;">
+                    <i class="fas fa-save me-2"></i>Save Changes
+                </button>
+            </form>
+        </div>
+
+        <div class="chart-container mt-3">
+            <div class="section-title mb-3">
+                <i class="fas fa-chart-pie me-2" style="color:var(--violet);"></i>Account Summary
+            </div>
+            <div class="row g-3">
+                <div class="col-4">
+                    <div style="text-align:center; background:var(--bg-hover); border-radius:10px; padding:16px;">
+                        <div style="font-size:22px; font-weight:700; color:var(--cyan);">{{ request.user.portfolio_set.count }}</div>
+                        <div style="font-size:12px; color:#888;">Holdings</div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div style="text-align:center; background:var(--bg-hover); border-radius:10px; padding:16px;">
+                        <div style="font-size:22px; font-weight:700; color:var(--violet);">{{ request.user.alert_set.count }}</div>
+                        <div style="font-size:12px; color:#888;">Alerts</div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div style="text-align:center; background:var(--bg-hover); border-radius:10px; padding:16px;">
+                        <div style="font-size:22px; font-weight:700; color:var(--teal);">{{ request.user.chatlog_set.count }}</div>
+                        <div style="font-size:12px; color:#888;">AI Chats</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

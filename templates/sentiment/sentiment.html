@@ -1,0 +1,246 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+<style>
+.fade-in { animation: fadeIn 0.6s ease-out forwards; opacity:0; }
+.fade-in-1 { animation-delay:0.1s; }
+.fade-in-2 { animation-delay:0.2s; }
+.fade-in-3 { animation-delay:0.3s; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);} }
+.news-card {
+    background: var(--bg-panel);
+    border: 1px solid var(--bg-hover);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    transition: transform 0.2s, border-color 0.2s;
+    border-left: 3px solid transparent;
+}
+.news-card:hover {
+    transform: translateX(4px);
+    border-left-color: var(--cyan);
+}
+.news-card.positive { border-left-color: var(--teal); }
+.news-card.negative { border-left-color: var(--crimson); }
+.news-card.neutral { border-left-color: var(--amber); }
+.sentiment-badge {
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+}
+.badge-positive { background:rgba(69,162,158,0.15); color:var(--teal); }
+.badge-negative { background:rgba(195,7,63,0.15); color:var(--crimson); }
+.badge-neutral { background:rgba(245,166,35,0.15); color:var(--amber); }
+.gauge-wrap {
+    position: relative;
+    width: 160px;
+    height: 160px;
+    margin: 0 auto;
+}
+.symbol-btn {
+    background: var(--bg-hover);
+    border: 1px solid rgba(102,252,241,0.1);
+    color: var(--text-main);
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s;
+    display: inline-block;
+}
+.symbol-btn:hover, .symbol-btn.active {
+    background: rgba(102,252,241,0.1);
+    border-color: var(--cyan);
+    color: var(--cyan);
+}
+</style>
+{% endblock %}
+{% block sent_active %}active{% endblock %}
+
+{% block content %}
+<div class="section-header fade-in fade-in-1">
+    <div>
+        <h4 style="color:#fff; margin:0; font-size:20px; font-weight:700;">
+            <span style="color:var(--mint);">⬡</span> Sentiment Analysis
+        </h4>
+        <p style="color:#888; font-size:12px; margin:2px 0 0;">News sentiment impact on stocks</p>
+    </div>
+    <form method="GET" style="display:flex; gap:8px; align-items:center;">
+        <input type="text" name="symbol" value="{{ symbol }}"
+            placeholder="Enter symbol..."
+            style="background:#111318; border:1px solid var(--bg-hover); color:var(--text-main); border-radius:10px; padding:10px 16px; font-size:14px; outline:none; width:180px;"
+            style="text-transform:uppercase;">
+        <button type="submit" class="btn-cyan" style="padding:10px 16px;">
+            <i class="fas fa-search"></i>
+        </button>
+    </form>
+</div>
+
+<div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px;" class="fade-in fade-in-1">
+    {% for s in stocks_list %}
+    <a href="?symbol={{ s }}" class="symbol-btn {% if s == symbol %}active{% endif %}">{{ s }}</a>
+    {% endfor %}
+</div>
+
+{% if stock %}
+<div class="row g-3 mb-4 fade-in fade-in-2">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-label"><i class="fas fa-tag me-1"></i>{{ symbol }}</div>
+            <div class="stat-value text-cyan">₹{{ stock.price }}</div>
+            <div class="stat-change {% if stock.is_positive %}text-teal{% else %}text-crimson{% endif %}">
+                {% if stock.is_positive %}▲{% else %}▼{% endif %} {{ stock.change_pct }}%
+            </div>
+        </div>
+    </div>
+
+    {% if overall %}
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-label"><i class="fas fa-newspaper me-1"></i>Overall Sentiment</div>
+            <div class="stat-value text-{{ overall.color }}">{{ overall.sentiment }}</div>
+            <div class="stat-change" style="color:#888;">Based on {{ articles|length }} articles</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-label"><i class="fas fa-tachometer-alt me-1"></i>Sentiment Score</div>
+            <div class="stat-value text-{{ overall.color }}">{{ overall.score }}</div>
+            <div class="stat-change" style="color:#888;">Out of 100</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-label"><i class="fas fa-chart-bar me-1"></i>Polarity</div>
+            <div class="stat-value text-{{ overall.color }}">{{ overall.polarity }}</div>
+            <div class="stat-change" style="color:#888;">-1 to +1 scale</div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<div class="row g-3">
+    <div class="col-md-8 fade-in fade-in-3">
+        <div class="chart-container">
+            <div class="section-title mb-3">
+                <i class="fas fa-newspaper me-2" style="color:var(--mint);"></i>
+                Latest News — {{ stock.name|truncatechars:30 }}
+            </div>
+            {% if articles %}
+                {% for article in articles %}
+                <div class="news-card {{ article.sentiment|lower }}">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px;">
+                        <div style="flex:1;">
+                            <a href="{{ article.url }}" target="_blank"
+                               style="color:#fff; font-size:14px; font-weight:600; text-decoration:none; line-height:1.4;">
+                                {{ article.title|truncatechars:100 }}
+                            </a>
+                            <p style="color:#888; font-size:12px; margin:6px 0 0; line-height:1.5;">
+                                {{ article.description|truncatechars:120 }}
+                            </p>
+                            <div style="margin-top:8px; display:flex; gap:12px; font-size:11px; color:#666;">
+                                <span><i class="fas fa-globe me-1"></i>{{ article.source }}</span>
+                                <span><i class="fas fa-calendar me-1"></i>{{ article.published_at }}</span>
+                            </div>
+                        </div>
+                        <div style="flex-shrink:0;">
+                            <span class="sentiment-badge badge-{{ article.sentiment|lower }}">
+                                <i class="fas {{ article.icon }} me-1"></i>{{ article.sentiment }}
+                            </span>
+                            <div style="font-size:11px; color:#666; text-align:center; margin-top:4px;">
+                                {{ article.polarity }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div style="text-align:center; padding:40px;">
+                    <i class="fas fa-newspaper" style="font-size:48px; color:#2A3545; margin-bottom:16px;"></i>
+                    <p style="color:#888;">No news found for {{ symbol }}</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-md-4 fade-in fade-in-3">
+        <div class="chart-container mb-3">
+            <div class="section-title mb-3">
+                <i class="fas fa-chart-pie me-2" style="color:var(--violet);"></i>Sentiment Breakdown
+            </div>
+            <canvas id="sentimentChart" height="200"></canvas>
+        </div>
+
+        {% if overall %}
+        <div class="chart-container">
+            <div class="section-title mb-3">
+                <i class="fas fa-info-circle me-2" style="color:var(--cyan);"></i>Market Impact
+            </div>
+            <div style="font-size:13px; line-height:1.8; color:#888;">
+                {% if overall.sentiment == 'Positive' %}
+                <p><i class="fas fa-arrow-up me-2" style="color:var(--teal);"></i>Positive news may push <strong style="color:#fff;">{{ symbol }}</strong> higher</p>
+                <p><i class="fas fa-users me-2" style="color:var(--teal);"></i>Investor confidence appears strong</p>
+                <p><i class="fas fa-chart-line me-2" style="color:var(--teal);"></i>Bullish sentiment detected</p>
+                {% elif overall.sentiment == 'Negative' %}
+                <p><i class="fas fa-arrow-down me-2" style="color:var(--crimson);"></i>Negative news may pressure <strong style="color:#fff;">{{ symbol }}</strong></p>
+                <p><i class="fas fa-exclamation-triangle me-2" style="color:var(--crimson);"></i>Caution advised for new positions</p>
+                <p><i class="fas fa-chart-line me-2" style="color:var(--crimson);"></i>Bearish sentiment detected</p>
+                {% else %}
+                <p><i class="fas fa-minus me-2" style="color:var(--amber);"></i>Mixed signals for <strong style="color:#fff;">{{ symbol }}</strong></p>
+                <p><i class="fas fa-balance-scale me-2" style="color:var(--amber);"></i>Market is undecided</p>
+                <p><i class="fas fa-eye me-2" style="color:var(--amber);"></i>Monitor closely</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% if articles %}
+<script>
+const positive = {{ articles|length }};
+let pos = 0, neg = 0, neu = 0;
+{% for article in articles %}
+    {% if article.sentiment == 'Positive' %}pos++;
+    {% elif article.sentiment == 'Negative' %}neg++;
+    {% else %}neu++;{% endif %}
+{% endfor %}
+
+const ctx = document.getElementById('sentimentChart').getContext('2d');
+new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+        labels: ['Positive', 'Negative', 'Neutral'],
+        datasets: [{
+            data: [pos, neg, neu],
+            backgroundColor: ['rgba(69,162,158,0.8)', 'rgba(195,7,63,0.8)', 'rgba(245,166,35,0.8)'],
+            borderColor: ['#45A29E', '#C3073F', '#F5A623'],
+            borderWidth: 2,
+        }]
+    },
+    options: {
+        responsive: true,
+        animation: { duration: 1500 },
+        plugins: {
+            legend: { labels: { color: '#888', font: { size: 12 }, padding: 16 } },
+            tooltip: {
+                backgroundColor: '#111318',
+                borderColor: '#66FCF1',
+                borderWidth: 1,
+                titleColor: '#66FCF1',
+                bodyColor: '#C5C6C7',
+            }
+        },
+        cutout: '65%',
+    }
+});
+</script>
+{% endif %}
+{% endblock %}

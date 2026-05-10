@@ -1,0 +1,869 @@
+StockAI Pro – AI-Based Stock Analysis & Decision Support System
+
+📄 Abstract
+
+Stock market investment has always been a complex and high-risk domain, requiring investors to process large volumes of financial data, news, and market trends simultaneously. Traditional stock analysis tools often lack intelligent decision support, leaving retail investors without proper guidance. This project presents StockAI Pro, an AI-powered web-based stock analysis and decision support system designed to bridge this gap by combining real-time market data, machine learning predictions, and natural language AI assistance into a single unified platform.
+The system is developed using Django as the backend framework, PostgreSQL as the relational database, and HTML, CSS, JavaScript, and Bootstrap for a responsive and intuitive frontend interface. Real-time stock data is fetched through industry-standard financial APIs including Yahoo Finance and Alpha Vantage, ensuring data accuracy and market reliability. The platform strictly follows Indian stock market timing — 9:15 AM to 3:30 PM IST — displaying live data during market hours and historical data after closing.
+StockAI Pro consists of six core modules. The Stock Dashboard Module provides live stock prices, interactive candlestick and line charts, and technical indicators such as RSI (Relative Strength Index) and Moving Averages, along with a personalized watchlist feature. The AI Prediction Module employs machine learning techniques, beginning with Linear Regression and scalable to Long Short-Term Memory (LSTM) neural networks, to forecast stock price trends and classify them as bullish or bearish with an associated confidence score. The Sentiment Analysis Module fetches real-time financial news and applies natural language processing to determine positive or negative market sentiment, linking it directly to corresponding stock movements.
+The Portfolio Management Module enables users to add and track their stock holdings, monitor real-time profit and loss, and receive AI-driven investment suggestions. The Alerts System notifies users of significant price movements and AI-detected anomalies in market behavior. Finally, the AI Chat Assistant Module, powered by a large language model API, provides intelligent responses strictly limited to stock market related queries. A robust prompt filtering and guardrail mechanism ensures the assistant declines all unrelated questions with a polite, predefined response — making it a focused and reliable financial assistant.
+StockAI Pro is designed as a modular, scalable, and production-ready system that demonstrates the practical integration of artificial intelligence, real-time data processing, and modern web technologies in the financial domain. The project aims to empower retail investors with intelligent tools previously available only to institutional players, making informed stock market decisions accessible to everyone.
+
+📊 Key Stats for Your Abstract Page
+ParameterDetailProject TitleStockAI Pro – AI-Based Stock Analysis & Decision Support SystemTechnology StackDjango, PostgreSQL, HTML/CSS/JS, BootstrapAI IntegrationOpenAI / Claude API, Linear Regression, LSTMData SourceYahoo Finance, Alpha Vantage, FinnhubMarket CoverageIndian Stock Market (NSE/BSE)Core Modules6TypeWeb-Based Decision Support System
+
+🎓 For Viva — One Line Summary
+
+"StockAI Pro is a full-stack AI-integrated web application that provides real-time stock analysis, machine learning based predictions, sentiment analysis, and an intelligent stock-only chat assistant to support retail investors in making informed decisions."
+
+
+
+
+# StockAI Pro — Complete System Documentation
+
+---
+
+## 1. PROJECT OVERVIEW
+
+**Project Name:** StockAI Pro — AI-Based Stock Analysis & Decision Support System
+
+**Objective:** A full-stack web application that provides real-time Indian stock market data, AI-powered predictions, sentiment analysis, portfolio tracking, smart alerts, and an intelligent stock-only AI chat assistant.
+
+**Problem It Solves:** Retail investors lack access to intelligent, unified tools for stock analysis. StockAI Pro combines real-time data, ML predictions, news sentiment, and AI chat in one platform — previously available only to institutional players.
+
+**Target Users:** Indian retail stock market investors, finance students, traders
+
+**Core Features:**
+1. Live Stock Dashboard (NSE/BSE real-time data, RSI, MA20, charts)
+2. AI Price Prediction (Linear Regression + Neural Network/LSTM)
+3. News Sentiment Analysis (TextBlob NLP on real news)
+4. Portfolio Tracker (holdings, P&L, transaction history)
+5. Smart Price Alerts (above/below threshold triggers)
+6. AI Chat Assistant (Groq AI, stock-only guardrail)
+7. User Authentication (register, login, logout, profile)
+8. Landing Page (public-facing marketing page)
+
+---
+
+## 2. TECH STACK
+
+**Backend:**
+- Django 6.0.4 (Python 3.14)
+- PostgreSQL 18 (database)
+- psycopg2-binary (PostgreSQL adapter)
+- python-dotenv (environment variables)
+
+**Frontend:**
+- HTML5, CSS3, JavaScript (ES6)
+- Bootstrap 5.3.0
+- Font Awesome 6.4.0
+- Chart.js (via CDN)
+
+**AI Integration:**
+- Groq API (llama-3.3-70b-versatile model)
+- scikit-learn (LinearRegression, MLPRegressor)
+- TextBlob (sentiment NLP)
+
+**External APIs:**
+- Yahoo Finance (yfinance library) — stock data
+- NewsAPI — financial news
+- Groq API — AI chat
+
+**Key Libraries:**
+```
+django==6.0.4
+psycopg2-binary
+python-dotenv
+yfinance==1.3.0
+requests
+scikit-learn==1.8.0
+numpy
+pandas
+textblob
+groq
+Pillow
+pytz
+```
+
+---
+
+## 3. COMPLETE FOLDER STRUCTURE
+
+```
+stockai_pro/                          ← Root project folder
+│
+├── stockai/                          ← Django project config
+│   ├── __init__.py
+│   ├── settings.py                   ← All settings, DB config, installed apps
+│   ├── urls.py                       ← Main URL router
+│   ├── wsgi.py
+│   └── asgi.py
+│
+├── apps/                             ← All Django apps
+│   ├── __init__.py
+│   │
+│   ├── users/                        ← Auth + Profile module
+│   │   ├── models.py                 ← UserProfile model
+│   │   ├── views.py                  ← login, register, logout, profile
+│   │   ├── urls.py                   ← /users/ routes
+│   │   ├── forms.py                  ← RegisterForm, ProfileUpdateForm
+│   │   ├── apps.py                   ← name = 'apps.users'
+│   │   └── migrations/
+│   │
+│   ├── dashboard/                    ← Stock data module
+│   │   ├── models.py                 ← (empty, uses yfinance)
+│   │   ├── views.py                  ← dashboard_view, stock_detail, stock_api
+│   │   ├── urls.py                   ← /dashboard/ routes
+│   │   ├── api_service.py            ← Yahoo Finance API calls
+│   │   ├── indicators.py             ← RSI, MA20 calculations
+│   │   ├── apps.py                   ← name = 'apps.dashboard'
+│   │   └── migrations/
+│   │
+│   ├── portfolio/                    ← Portfolio tracking module
+│   │   ├── models.py                 ← Portfolio, Transaction models
+│   │   ├── views.py                  ← portfolio, add_stock, sell, history
+│   │   ├── urls.py                   ← /portfolio/ routes
+│   │   ├── utils.py                  ← P&L calculation helpers
+│   │   ├── admin.py                  ← Portfolio, Transaction registered
+│   │   ├── apps.py                   ← name = 'apps.portfolio'
+│   │   └── migrations/
+│   │
+│   ├── ai_prediction/                ← ML prediction module
+│   │   ├── models.py                 ← (no DB models needed)
+│   │   ├── views.py                  ← prediction_view
+│   │   ├── urls.py                   ← /prediction/ routes
+│   │   ├── predictor.py              ← Linear Regression + MLPRegressor
+│   │   ├── apps.py                   ← name = 'apps.ai_prediction'
+│   │   └── migrations/
+│   │
+│   ├── sentiment/                    ← News sentiment module
+│   │   ├── models.py                 ← (no DB models needed)
+│   │   ├── views.py                  ← sentiment_view
+│   │   ├── urls.py                   ← /sentiment/ routes
+│   │   ├── news_fetcher.py           ← NewsAPI integration
+│   │   ├── analyzer.py               ← TextBlob NLP sentiment
+│   │   ├── apps.py                   ← name = 'apps.sentiment'
+│   │   └── migrations/
+│   │
+│   ├── alerts/                       ← Price alerts module
+│   │   ├── models.py                 ← Alert model
+│   │   ├── views.py                  ← alerts, add_alert, delete, check
+│   │   ├── urls.py                   ← /alerts/ routes
+│   │   ├── apps.py                   ← name = 'apps.alerts'
+│   │   └── migrations/
+│   │
+│   └── ai_chat/                      ← AI chat assistant module
+│       ├── models.py                 ← ChatLog model
+│       ├── views.py                  ← chat_view, chat_api
+│       ├── urls.py                   ← /chat/ routes
+│       ├── guardrail.py              ← Stock-only filter logic
+│       ├── chat_service.py           ← Groq API integration
+│       ├── apps.py                   ← name = 'apps.ai_chat'
+│       └── migrations/
+│
+├── static/                           ← All static assets
+│   ├── css/
+│   │   ├── base.css                  ← Global theme, navbar, sidebar, colors
+│   │   ├── auth.css                  ← Login/register page styles
+│   │   └── dashboard.css             ← Dashboard cards, charts, tables
+│   ├── js/
+│   │   └── (empty — JS inline in templates)
+│   └── img/
+│       ├── mahek.jpeg                ← Developer photo
+│       └── kavya.jpeg                ← Developer photo
+│
+├── templates/                        ← All HTML templates
+│   ├── base.html                     ← Master layout (navbar + sidebar)
+│   ├── landing.html                  ← Public landing page
+│   ├── 404.html                      ← (optional)
+│   ├── users/
+│   │   ├── login.html
+│   │   ├── register.html
+│   │   └── profile.html
+│   ├── dashboard/
+│   │   ├── dashboard.html
+│   │   └── stock_detail.html
+│   ├── portfolio/
+│   │   ├── portfolio.html
+│   │   ├── add_stock.html
+│   │   └── trade_history.html
+│   ├── ai_prediction/
+│   │   └── prediction.html
+│   ├── sentiment/
+│   │   └── sentiment.html
+│   ├── alerts/
+│   │   └── alerts.html
+│   └── ai_chat/
+│       └── chat.html
+│
+├── ml_models/                        ← Saved ML model files (optional)
+│   ├── linear_model.pkl
+│   └── lstm_model.h5
+│
+├── media/                            ← User uploaded files (avatars)
+├── venv/                             ← Virtual environment
+├── .env                              ← API keys and secrets
+├── .gitignore
+├── manage.py
+├── requirements.txt
+└── README.md
+```
+
+---
+
+## 4. FILE-BY-FILE BREAKDOWN
+
+### `stockai/settings.py`
+**Purpose:** Central Django configuration
+**Key settings:**
+```python
+INSTALLED_APPS = [
+    'apps.users', 'apps.dashboard', 'apps.portfolio',
+    'apps.ai_prediction', 'apps.sentiment', 'apps.alerts', 'apps.ai_chat'
+]
+DATABASES = { PostgreSQL with env vars }
+TIME_ZONE = 'Asia/Kolkata'
+LOGIN_URL = '/users/login/'
+LOGIN_REDIRECT_URL = '/dashboard/'
+LOGOUT_REDIRECT_URL = '/users/login/'
+STATICFILES_DIRS = [BASE_DIR / 'static']
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+```
+
+### `stockai/urls.py`
+```python
+urlpatterns = [
+    path('', TemplateView landing page),
+    path('admin/', admin),
+    path('users/', include('apps.users.urls')),
+    path('dashboard/', include('apps.dashboard.urls')),
+    path('portfolio/', include('apps.portfolio.urls')),
+    path('chat/', include('apps.ai_chat.urls')),
+    path('prediction/', include('apps.ai_prediction.urls')),
+    path('sentiment/', include('apps.sentiment.urls')),
+    path('alerts/', include('apps.alerts.urls')),
+]
+```
+
+### `apps/dashboard/api_service.py`
+**Purpose:** All Yahoo Finance API calls
+**Key functions:**
+```python
+def is_market_open():
+    # Checks IST time 9:15 AM - 3:30 PM weekdays
+    # Returns True/False
+
+def get_stock_data(symbol):
+    # Fetches single stock via yfinance
+    # symbol + ".NS" for NSE
+    # Returns: price, change, change_pct, volume, high, low,
+    #          chart_dates, chart_prices, is_positive, name
+
+def get_multiple_stocks(symbols):
+    # Loops get_stock_data for list
+    # Returns list of stock dicts
+
+DEFAULT_STOCKS = ['RELIANCE', 'TCS', 'HDFCBANK', 'INFY', 'TATAMOTORS', 'WIPRO']
+```
+
+### `apps/dashboard/indicators.py`
+**Purpose:** Technical indicator calculations
+```python
+def calculate_rsi(prices, period=14):
+    # Uses pandas rolling mean on gains/losses
+    # Returns list of RSI values (None for first 14)
+
+def calculate_ma(prices, period=20):
+    # Simple moving average using pandas
+    # Returns list of MA values
+```
+
+### `apps/dashboard/views.py`
+```python
+@login_required
+def dashboard_view(request):
+    # Fetches DEFAULT_STOCKS data
+    # Calculates RSI and MA20 for featured stock (RELIANCE)
+    # Converts chart data to JSON for Chart.js
+    # Context: stocks, featured, market_open
+
+@login_required
+def stock_detail_view(request, symbol):
+    # Individual stock page with full indicators
+
+@login_required
+def get_stock_api(request, symbol):
+    # JSON endpoint for AJAX calls
+```
+
+### `apps/ai_chat/guardrail.py`
+```python
+STOCK_KEYWORDS = [
+    'stock', 'share', 'market', 'trading', 'invest', 'portfolio',
+    'nse', 'bse', 'sensex', 'nifty', 'equity', 'dividend', 'ipo',
+    'bull', 'bear', 'price', 'buy', 'sell', 'profit', 'loss',
+    'reliance', 'tcs', 'infosys', 'hdfc', 'wipro', 'infy',
+    'pe ratio', 'eps', 'revenue', 'earnings', 'fundamental',
+    'technical', 'rsi', 'moving average', 'chart', 'trend',
+    'broker', 'demat', 'sebi', 'mutual fund', 'etf', 'index',
+    'rupee', 'currency', 'finance', 'financial', 'economy',
+    'gdp', 'inflation', 'interest rate', 'rbi', 'monetary',
+    'sector', 'cap', 'valuation', 'return', 'yield', 'bond',
+]
+
+GREETINGS = ['hi', 'hello', 'hey', 'hii', 'thanks', 'thank you', 'ok', 'bye', 'help']
+
+def is_stock_related(question):
+    # Returns True if greeting OR stock keyword found
+    # Otherwise returns False → blocked
+```
+
+### `apps/ai_chat/chat_service.py`
+```python
+from groq import Groq
+client = Groq(api_key=os.getenv('GROQ_API_KEY'))
+
+SYSTEM_PROMPT = """You are StockAI Pro Assistant, expert in Indian markets (NSE/BSE).
+Only answer: stocks, trading, investment, financial metrics, market news, mutual funds, RBI."""
+
+def get_ai_response(user_message):
+    if not is_stock_related(user_message):
+        return {
+            'response': "I am designed to answer only stock market related queries.",
+            'is_blocked': True
+        }
+    # Calls Groq API with llama-3.3-70b-versatile
+    # max_tokens=500, temperature=0.7
+    # Returns {'response': text, 'is_blocked': False}
+```
+
+### `apps/ai_prediction/predictor.py`
+```python
+def predict_linear(prices):
+    # LinearRegression from sklearn
+    # X = day indices, y = prices
+    # Predicts next day price
+    # Returns: predicted_price, trend (Bullish/Bearish),
+    #          confidence (55-95%), change_pct
+
+def predict_lstm(prices):
+    # MLPRegressor (Neural Network) from sklearn
+    # hidden_layer_sizes=(64, 32), max_iter=500
+    # MinMaxScaler for normalization
+    # lookback=10 days
+    # Returns same structure as linear
+
+def get_prediction(prices):
+    # Returns {'linear': {...}, 'lstm': {...}}
+```
+
+### `apps/sentiment/news_fetcher.py`
+```python
+def fetch_stock_news(symbol, company_name):
+    # Calls NewsAPI /v2/everything
+    # Query: "{company_name} OR {symbol} stock India"
+    # pageSize=10, language=en, sortBy=publishedAt
+    # Returns list of {title, description, url, source, published_at}
+```
+
+### `apps/sentiment/analyzer.py`
+```python
+def analyze_sentiment(text):
+    # TextBlob polarity: >0.1=Positive, <-0.1=Negative, else Neutral
+    # Returns {sentiment, polarity, color, icon}
+
+def analyze_news_sentiment(articles):
+    # Analyzes each article
+    # Calculates average polarity for overall sentiment
+    # Returns (results_list, overall_dict)
+```
+
+---
+
+## 5. DATABASE DESIGN
+
+### UserProfile (apps/users)
+```
+user         → OneToOneField(User)  ← Django built-in User
+avatar       → ImageField (optional)
+phone        → CharField(15)
+created_at   → DateTimeField(auto)
+```
+
+### Portfolio (apps/portfolio)
+```
+user         → ForeignKey(User)
+symbol       → CharField(20)       ← e.g. "RELIANCE"
+company_name → CharField(100)
+quantity     → DecimalField(10,2)
+buy_price    → DecimalField(10,2)
+buy_date     → DateField
+created_at   → DateTimeField(auto)
+property: total_invested = quantity × buy_price
+```
+
+### Transaction (apps/portfolio)
+```
+user             → ForeignKey(User)
+symbol           → CharField(20)
+company_name     → CharField(100)
+transaction_type → CharField ['BUY', 'SELL']
+quantity         → DecimalField(10,2)
+price            → DecimalField(10,2)
+date             → DateField(auto)
+created_at       → DateTimeField(auto)
+property: total_value = quantity × price
+```
+
+### Alert (apps/alerts)
+```
+user         → ForeignKey(User)
+symbol       → CharField(20)
+company_name → CharField(100)
+alert_type   → CharField ['PRICE_ABOVE', 'PRICE_BELOW']
+target_price → DecimalField(10,2)
+current_price→ DecimalField(10,2)
+status       → CharField ['ACTIVE', 'TRIGGERED']
+created_at   → DateTimeField(auto)
+triggered_at → DateTimeField(null)
+```
+
+### ChatLog (apps/ai_chat)
+```
+user       → ForeignKey(User)
+message    → TextField
+response   → TextField
+is_blocked → BooleanField
+created_at → DateTimeField(auto)
+```
+
+---
+
+## 6. API INTEGRATION DETAILS
+
+### Yahoo Finance (yfinance)
+- **File:** `apps/dashboard/api_service.py`
+- **Function:** `get_stock_data(symbol)`
+- **Call:** `yf.Ticker(symbol + ".NS")`
+- **Data extracted:** currentPrice, previousClose, volume, dayHigh, dayLow, longName, history(1mo)
+- **Flow:** View → api_service → yfinance → dict → template context → Chart.js
+
+### NewsAPI
+- **File:** `apps/sentiment/news_fetcher.py`
+- **Endpoint:** `https://newsapi.org/v2/everything`
+- **Key:** `os.getenv('NEWS_API_KEY')`
+- **Flow:** View → news_fetcher → NewsAPI → articles list → analyzer → template
+
+### Groq AI
+- **File:** `apps/ai_chat/chat_service.py`
+- **Model:** `llama-3.3-70b-versatile`
+- **Key:** `os.getenv('GROQ_API_KEY')`
+- **Flow:** User message → guardrail check → Groq API → response → ChatLog saved → JSON to frontend
+
+---
+
+## 7. AI SYSTEM
+
+**API Used:** Groq (groq Python library)
+**Model:** `llama-3.3-70b-versatile`
+
+**System Prompt:**
+```
+You are StockAI Pro Assistant, an expert stock market analyst for Indian markets (NSE/BSE).
+You ONLY answer questions related to:
+- Stock markets (NSE, BSE, Sensex, Nifty)
+- Individual stocks and companies
+- Trading strategies and techniques
+- Investment advice and portfolio management
+- Financial metrics (PE ratio, EPS, RSI, etc.)
+- Market news and analysis
+- Mutual funds and ETFs
+- Indian economy and RBI policies
+Keep responses concise, clear and actionable.
+Always mention risks when giving investment advice.
+Format numbers in Indian style (Lakhs, Crores).
+```
+
+**Guardrail Logic:**
+```python
+# Step 1: Check if greeting → allow
+# Step 2: Check if any STOCK_KEYWORD in message → allow
+# Step 3: Otherwise → block with:
+"I am designed to answer only stock market related queries.
+Please ask me about stocks, trading, investments, or financial markets!"
+```
+
+**Response Handling:**
+- Allowed → Groq API called → response.choices[0].message.content returned
+- Blocked → is_blocked=True, canned response returned
+- Both saved to ChatLog DB
+- Frontend shows blocked in red bubble, allowed in normal AI bubble
+
+---
+
+## 8. UI/UX DESIGN SYSTEM
+
+### Color Palette (EXACT HEX — DO NOT CHANGE)
+```css
+--bg-primary: #0B0C10    /* Deep black — page background */
+--bg-panel:   #1F2833    /* Dark blue — cards, navbar, sidebar */
+--bg-hover:   #2A3545    /* Medium blue — hover states, table rows */
+--bg-surface: #111318    /* Darkest — input backgrounds */
+--cyan:       #66FCF1    /* Electric cyan — logo, active nav, CTA, primary accent */
+--teal:       #45A29E    /* Deep teal — bullish/positive/success */
+--crimson:    #C3073F    /* Crimson red — bearish/negative/danger */
+--text-main:  #C5C6C7    /* Cool grey — body text */
+--violet:     #C8A0FF    /* AI violet — AI chat, prediction module */
+--amber:      #F5A623    /* Amber — alerts, warnings, RSI */
+--blue:       #3B82F6    /* Data blue — MA20 chart line */
+--neon-ice:   #00E5FF    /* RSI secondary highlight */
+--mint:       #1DE9B6    /* Positive sentiment */
+--soft-red:   #FF6B6B    /* Negative sentiment soft */
+```
+
+### Typography
+- Font: `'Segoe UI', sans-serif` (system font)
+- Headings: font-weight 700-800
+- Body: font-weight 400, font-size 14-16px
+- Labels: font-size 11-12px, color #888
+
+### Layout System
+- **Navbar:** Fixed top, height 60px, background #1F2833
+- **Sidebar:** Fixed left, width 220px, top 60px, background #1F2833
+- **Main content:** margin-left 220px, margin-top 60px, padding 24px
+
+### Reusable CSS Classes
+```css
+.card-dark          /* Panel background card */
+.btn-cyan           /* Primary CTA button */
+.stat-card          /* Dashboard metric card with hover */
+.chart-container    /* Chart wrapper panel */
+.stock-table        /* Data table */
+.badge-positive     /* Green % badge */
+.badge-negative     /* Red % badge */
+.indicator-badge    /* Cyan technical indicator tag */
+.text-cyan/teal/crimson/violet/amber  /* Color utilities */
+.market-status-open/closed  /* Market status pill */
+.watchlist-item     /* Sidebar watchlist row */
+.section-header     /* Title + action row */
+.section-title      /* Section heading */
+```
+
+### CSS Files
+- `static/css/base.css` → global: navbar, sidebar, cards, buttons, scrollbar
+- `static/css/auth.css` → login/register: glass card, floating orbs, animations
+- `static/css/dashboard.css` → dashboard specific: stat cards, tables, charts, ticker
+
+### Animation Classes
+```css
+.fade-in + .fade-in-1/2/3/4   /* Staggered fade up animations */
+.slide-up + .slide-up-1/2/3   /* Slide up animations */
+.market-down-blink             /* Red blink on page when market bearish */
+.market-up-pulse               /* Green pulse when bullish */
+.number-pop                    /* Scale pop for numbers */
+.market-open-pulse             /* Pulsing live badge */
+```
+
+---
+
+## 9. DATA FLOW ARCHITECTURE
+
+```
+USER ACTION → FRONTEND → BACKEND → API → RESPONSE → UI
+
+1. Dashboard Load:
+   User visits /dashboard/
+   → dashboard_view()
+   → get_multiple_stocks(['RELIANCE','TCS',...])
+   → yf.Ticker("RELIANCE.NS").info + .history()
+   → calculate_rsi(prices) + calculate_ma(prices)
+   → json.dumps(chart_data)
+   → render dashboard.html with context
+   → Chart.js renders price + RSI charts
+
+2. AI Chat:
+   User types message → JS fetch POST /chat/api/
+   → chat_api view
+   → is_stock_related(message) check
+   → If YES: Groq API call with system prompt
+   → response.choices[0].message.content
+   → ChatLog.objects.create(...)
+   → JsonResponse({'response': text, 'is_blocked': False})
+   → JS appends bubble to chat
+
+3. Portfolio P&L:
+   User visits /portfolio/
+   → portfolio_view()
+   → Portfolio.objects.filter(user=request.user)
+   → For each holding: get_stock_data(symbol)
+   → current_value = quantity × current_price
+   → pnl = current_value - total_invested
+   → render portfolio.html
+
+4. Sentiment:
+   User visits /sentiment/?symbol=TCS
+   → sentiment_view()
+   → fetch_stock_news('TCS', 'Tata Consultancy...')
+   → NewsAPI /v2/everything → 10 articles
+   → For each: TextBlob(title+description).sentiment.polarity
+   → Average polarity → overall sentiment
+   → render sentiment.html with doughnut chart
+```
+
+---
+
+## 10. ROUTING & CONNECTIONS
+
+```python
+# Complete URL Map
+/                           → landing.html (TemplateView)
+/users/login/               → login_view
+/users/register/            → register_view
+/users/logout/              → logout_view
+/users/profile/             → profile_view
+/dashboard/                 → dashboard_view
+/dashboard/stock/<symbol>/  → stock_detail_view
+/dashboard/api/stock/<sym>/ → get_stock_api (JSON)
+/portfolio/                 → portfolio_view
+/portfolio/add/             → add_stock_view
+/portfolio/sell/<pk>/       → sell_stock_view
+/portfolio/history/         → trade_history_view
+/chat/                      → chat_view
+/chat/api/                  → chat_api (JSON POST)
+/prediction/                → prediction_view
+/prediction/?symbol=TCS     → same view, GET param
+/sentiment/                 → sentiment_view
+/sentiment/?symbol=TCS      → same view, GET param
+/alerts/                    → alerts_view
+/alerts/add/                → add_alert_view
+/alerts/delete/<pk>/        → delete_alert_view
+/alerts/check/              → check_alerts_view
+/admin/                     → Django admin
+```
+
+---
+
+## 11. DEPENDENCY MAP
+
+```
+base.html
+  ← extended by ALL templates
+  ← loads base.css
+  ← Bootstrap 5.3 CDN
+  ← Font Awesome 6.4 CDN
+
+dashboard_view
+  ← api_service.get_multiple_stocks()
+  ← api_service.get_stock_data()
+  ← indicators.calculate_rsi()
+  ← indicators.calculate_ma()
+  → dashboard.html → Chart.js
+
+chat_api
+  ← guardrail.is_stock_related()
+  ← chat_service.get_ai_response()
+  ← chat_service → Groq API
+  → ChatLog model
+
+portfolio_view
+  ← Portfolio model
+  ← api_service.get_stock_data() (for current price)
+  → portfolio.html
+
+prediction_view
+  ← api_service.get_stock_data()
+  ← predictor.get_prediction()
+  ← predictor → sklearn LinearRegression + MLPRegressor
+  → prediction.html → Chart.js
+
+sentiment_view
+  ← api_service.get_stock_data()
+  ← news_fetcher.fetch_stock_news()
+  ← analyzer.analyze_news_sentiment()
+  ← TextBlob
+  → sentiment.html → Chart.js doughnut
+
+alerts check_alerts_view
+  ← Alert model
+  ← api_service.get_stock_data()
+  → updates Alert.status in DB
+```
+
+---
+
+## 12. REAL-TIME DATA HANDLING
+
+**Stock Data Source:** Yahoo Finance via yfinance library
+
+**Fetch Trigger:** Every page load (no auto-refresh, manual refresh)
+
+**Market Timing Logic:**
+```python
+def is_market_open():
+    ist = pytz.timezone('Asia/Kolkata')
+    now = datetime.now(ist)
+    open_time = now.replace(hour=9, minute=15, second=0)
+    close_time = now.replace(hour=15, minute=30, second=0)
+    is_weekday = now.weekday() < 5  # Mon-Fri
+    return is_weekday and open_time <= now <= close_time
+```
+
+**Dashboard behavior:**
+- Shows "Market Open" green badge during 9:15AM-3:30PM IST weekdays
+- Shows "Market Closed" red badge otherwise
+- Data still loads regardless (shows last available price)
+- Real-time clock in dashboard updates every second via JS `setInterval`
+
+**Data freshness:** yfinance fetches latest available data from Yahoo servers on each page load. During market hours this is near real-time (~15 min delay).
+
+---
+
+## 13. CURRENT PROJECT STATUS
+
+### Completed ✅
+- Django project setup with PostgreSQL
+- User authentication (register, login, logout, profile)
+- Stock Dashboard with live data, RSI, MA20, Chart.js charts
+- Ticker tape animation on dashboard
+- Market open/close detection
+- Portfolio module (add, sell, P&L, history)
+- AI Chat with Groq (llama-3.3-70b) + guardrail
+- AI Prediction (Linear Regression + MLPRegressor)
+- Sentiment Analysis (NewsAPI + TextBlob)
+- Alerts system (price above/below, check now)
+- Profile page with account summary
+- Landing page with features, about, developer info
+- External CSS structure (base.css, auth.css, dashboard.css)
+- Admin panel with Portfolio and Transaction registered
+- .env file for all API keys
+- requirements.txt and .gitignore
+
+### Partially Done ⚠️
+- `stock_detail.html` template (URL exists, template may be basic)
+- Watchlist (currently shows DEFAULT_STOCKS, not user-saved)
+- Landing page About section with developer photos
+
+### Pending ❌
+- Watchlist as separate saved stocks per user (DB model needed)
+- Email notifications for alerts
+- Auto-refresh of stock data (WebSocket or AJAX polling)
+- README.md content
+
+---
+
+## 14. RULES FOR FUTURE DEVELOPMENT
+
+### STRICT UI RULES — DO NOT CHANGE:
+1. **Color palette is FINAL** — Never change any HEX value in the palette
+2. **Dark theme only** — Never add light mode or white backgrounds to app pages
+3. **Font stays Segoe UI** — No Google Fonts or other font changes
+4. **Sidebar width stays 220px** — Never change sidebar dimensions
+5. **Navbar height stays 60px** — All margin-top values depend on this
+
+### FOLDER STRUCTURE RULES:
+1. All new apps go inside `apps/` folder
+2. Each new app needs `apps.py` with correct `name = 'apps.appname'`
+3. Register new app in `settings.py` INSTALLED_APPS as `'apps.appname'`
+4. Add new app URLs to `stockai/urls.py`
+5. New app templates go in `templates/appname/` subfolder
+
+### CSS RULES:
+1. Global reusable styles → `static/css/base.css`
+2. Page-specific styles → inline `<style>` in template or new CSS file
+3. Never use inline `background: white` or light colors in app pages
+4. Always use CSS variables `var(--cyan)` not hardcoded `#66FCF1`
+
+### NEW PAGE RULES:
+1. Every new page must `{% extends 'base.html' %}`
+2. Every new page must `{% load static %}`
+3. Add corresponding `{% block X_active %}active{% endblock %}` for sidebar
+4. Link new sidebar item in `base.html`
+
+### MODEL RULES:
+1. Always run `makemigrations` and `migrate` after model changes
+2. Register new models in `admin.py`
+3. All models need `ForeignKey(User)` for user-specific data
+
+---
+
+## 15. COMMON RISKS / BREAKPOINTS
+
+### What Can Break:
+1. **yfinance API changes** → stock data returns None → dashboard crashes
+   - Fix: Always wrap in try/except, return None, check in view
+2. **Groq API key quota** → chat returns error
+   - Fix: Check quota at console.groq.com, key in .env
+3. **NewsAPI rate limit** → 100 requests/day free tier
+   - Fix: Don't call on every refresh; consider caching
+4. **Django template `{% endblock %}` missing** → TemplateSyntaxError
+   - Fix: Always verify block tags are matched
+5. **`apps/` folder `__init__.py` missing** → ModuleNotFoundError
+   - Fix: Ensure `apps/__init__.py` exists
+6. **PostgreSQL not running** → connection error on startup
+   - Fix: Start PostgreSQL service before `runserver`
+7. **`.env` not loaded** → API keys return None
+   - Fix: `load_dotenv()` must be at top of `settings.py`
+8. **TATAMOTORS vs TATAMOTORS.NS** → yfinance may fail
+   - Fix: `.NS` suffix added in `api_service.py`
+
+### What to NEVER Do:
+- Never delete `apps/__init__.py`
+- Never hardcode API keys in Python files
+- Never change `name` in `apps.py` without updating `settings.py`
+- Never add `{% endblock %}` in wrong position
+- Never use Bootstrap dark theme classes — custom dark theme only
+
+---
+
+## 16. QUICK SUMMARY (1-PAGE VERSION)
+
+```
+PROJECT: StockAI Pro — AI Stock Analysis Web App
+STACK: Django 6 + PostgreSQL + Bootstrap 5 + Chart.js + Groq AI + yfinance
+
+CREDENTIALS:
+  DB: stockai_db | user: postgres | pass: mahek2038
+  pgAdmin pass: mahek2038
+
+API KEYS (in .env):
+  GROQ_API_KEY=...
+  NEWS_API_KEY=...
+  GEMINI_API_KEY=... (not used, replaced by Groq)
+
+MODULES (all complete):
+  /dashboard/    → Live NSE stocks, RSI, MA20, Chart.js
+  /portfolio/    → Holdings, P&L, buy/sell, history
+  /chat/         → Groq AI, stock-only guardrail
+  /prediction/   → Linear Regression + MLPRegressor
+  /sentiment/    → NewsAPI + TextBlob NLP
+  /alerts/       → Price threshold alerts
+  /users/        → Auth + profile
+
+KEY FILES:
+  apps/dashboard/api_service.py  → Yahoo Finance
+  apps/ai_chat/chat_service.py   → Groq API
+  apps/ai_chat/guardrail.py      → Stock keyword filter
+  apps/ai_prediction/predictor.py → ML models
+  apps/sentiment/analyzer.py     → TextBlob sentiment
+  stockai/settings.py            → All config
+  templates/base.html            → Master layout
+  static/css/base.css            → Global theme
+
+COLORS (NEVER CHANGE):
+  Background: #0B0C10 | Panel: #1F2833 | Hover: #2A3545
+  Cyan: #66FCF1 | Teal: #45A29E | Crimson: #C3073F
+  Violet: #C8A0FF | Amber: #F5A623 | Blue: #3B82F6
+
+AI GUARDRAIL:
+  Checks STOCK_KEYWORDS list → if no match AND not greeting → blocks
+  Blocked response: "I am designed to answer only stock market related queries."
+
+TO RUN:
+  cd stockai_pro
+  venv\Scripts\activate
+  python manage.py runserver
+  → http://127.0.0.1:8000/
+```
+
+---
+

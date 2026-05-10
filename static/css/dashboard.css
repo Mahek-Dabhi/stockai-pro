@@ -1,0 +1,319 @@
+/* STAT CARDS */
+.stat-card {
+    background: var(--bg-panel);
+    border: 1px solid var(--bg-hover);
+    border-radius: 12px;
+    padding: 16px 20px;
+    transition: transform 0.2s, border-color 0.2s;
+}
+.stat-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--cyan);
+}
+.stat-label {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 4px;
+}
+.stat-value {
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+}
+.stat-change {
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+/* STOCK TABLE */
+.stock-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.stock-table th {
+    font-size: 11px;
+    color: #888;
+    text-transform: uppercase;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--bg-hover);
+    text-align: left;
+}
+.stock-table td {
+    padding: 12px;
+    border-bottom: 1px solid rgba(42,53,69,0.5);
+    font-size: 14px;
+    color: var(--text-main);
+}
+.stock-table tr:hover td {
+    background: var(--bg-hover);
+    cursor: pointer;
+}
+.stock-symbol {
+    font-weight: 600;
+    color: #fff;
+}
+.badge-positive {
+    background: rgba(69,162,158,0.15);
+    color: var(--teal);
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+}
+.badge-negative {
+    background: rgba(195,7,63,0.15);
+    color: var(--crimson);
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* CHART CONTAINER */
+.chart-container {
+    background: var(--bg-panel);
+    border: 1px solid var(--bg-hover);
+    border-radius: 12px;
+    padding: 20px;
+}
+.chart-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 16px;
+}
+
+/* MARKET STATUS */
+.market-status-open {
+    background: rgba(69,162,158,0.15);
+    color: var(--teal);
+    border: 1px solid rgba(69,162,158,0.3);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+.market-status-closed {
+    background: rgba(195,7,63,0.15);
+    color: var(--crimson);
+    border: 1px solid rgba(195,7,63,0.3);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* SECTION HEADER */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+.section-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+}
+
+/* MINI CHART */
+.mini-spark {
+    height: 40px;
+    width: 100px;
+}
+
+/* WATCHLIST ITEM */
+.watchlist-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(42,53,69,0.5);
+}
+.watchlist-item:last-child {
+    border-bottom: none;
+}
+
+/* INDICATOR BADGES */
+.indicator-badge {
+    background: rgba(102,252,241,0.1);
+    color: var(--cyan);
+    border: 1px solid rgba(102,252,241,0.2);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+/* LOADING SPINNER */
+.spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--bg-hover);
+    border-top: 2px solid var(--cyan);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    display: inline-block;
+}
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ── MARKET OVERLAY BLINK / PULSE ───────────────────────────────────────── */
+/* These are declared in dashboard.html <style> so the overlay div          */
+/* already gets the right class on load. dashboard.css keeps a copy as      */
+/* fallback in case the inline block is ever removed.                        */
+@keyframes redBlink {
+    0%   { background: transparent; }
+    15%  { background: rgba(195,7,63,0.13); }
+    30%  { background: transparent; }
+    55%  { background: rgba(195,7,63,0.08); }
+    70%  { background: transparent; }
+    100% { background: transparent; }
+}
+@keyframes greenPulse {
+    0%   { background: transparent; }
+    40%  { background: rgba(69,162,158,0.08); }
+    100% { background: transparent; }
+}
+
+/* The overlay div uses id="market-overlay" so these classes apply cleanly  */
+.market-down-blink {
+    animation: redBlink 2.5s ease-in-out infinite !important;
+    box-shadow: inset 0 0 60px rgba(195, 7, 63, 0.15);
+}
+.market-up-pulse {
+    animation: greenPulse 3s ease-in-out infinite !important;
+}
+
+/* PREMIUM CARD GLOW */
+.card-glow-red {
+    border-color: rgba(195,7,63,0.4) !important;
+    box-shadow: 0 0 20px rgba(195,7,63,0.1) !important;
+}
+.card-glow-green {
+    border-color: rgba(69,162,158,0.4) !important;
+    box-shadow: 0 0 20px rgba(69,162,158,0.1) !important;
+}
+
+/* TICKER TAPE */
+.ticker-wrap {
+    background: #111318;
+    border-top: 1px solid var(--bg-hover);
+    border-bottom: 1px solid var(--bg-hover);
+    padding: 8px 0;
+    overflow: hidden;
+    margin-bottom: 20px;
+    border-radius: 8px;
+}
+.ticker-move {
+    display: flex;
+    gap: 40px;
+    animation: tickerScroll 30s linear infinite;
+    white-space: nowrap;
+    width: max-content;
+}
+@keyframes tickerScroll {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+.ticker-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+}
+.ticker-symbol { color: #fff; }
+.ticker-price  { color: #888; }
+
+/* PREMIUM STAT CARD */
+.stat-card {
+    background: var(--bg-panel);
+    border: 1px solid var(--bg-hover);
+    border-radius: 14px;
+    padding: 18px 20px;
+    transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+    position: relative;
+    overflow: hidden;
+}
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 3px;
+    background: linear-gradient(90deg, var(--cyan), transparent);
+    opacity: 0.6;
+}
+.stat-card.red-card::before {
+    background: linear-gradient(90deg, var(--crimson), transparent);
+}
+.stat-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--cyan);
+    box-shadow: 0 8px 32px rgba(102,252,241,0.12);
+}
+
+/* NUMBER COUNTER ANIMATION */
+@keyframes numberPop {
+    0%  { transform: scale(0.8); opacity: 0; }
+    60% { transform: scale(1.05); }
+    100%{ transform: scale(1);   opacity: 1; }
+}
+.number-pop {
+    animation: numberPop 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
+
+/* CHART CONTAINER PREMIUM */
+.chart-container {
+    background: var(--bg-panel);
+    border: 1px solid var(--bg-hover);
+    border-radius: 14px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+}
+.chart-container::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+    opacity: 0.3;
+}
+
+/* STOCK TABLE PREMIUM */
+.stock-table tr td:first-child {
+    border-left: 2px solid transparent;
+    transition: border-color 0.2s;
+}
+.stock-table tr:hover td:first-child {
+    border-left: 2px solid var(--cyan);
+}
+
+/* WATCHLIST PREMIUM */
+.watchlist-item {
+    border-radius: 10px;
+    padding: 10px 8px;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+}
+.watchlist-item:hover {
+    background: var(--bg-hover);
+    border-color: rgba(102,252,241,0.1);
+    transform: translateX(4px);
+}
+
+/* FLOATING PARTICLES */
+@keyframes float {
+    0%,100% { transform: translateY(0px);   opacity: 0.3; }
+    50%      { transform: translateY(-10px); opacity: 0.6; }
+}
+.particle {
+    position: absolute;
+    width: 3px; height: 3px;
+    border-radius: 50%;
+    background: var(--cyan);
+    animation: float 4s ease-in-out infinite;
+    pointer-events: none;
+}

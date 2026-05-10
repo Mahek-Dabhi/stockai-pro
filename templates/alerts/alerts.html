@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+<style>
+.fade-in { animation: fadeIn 0.6s ease-out forwards; opacity:0; }
+.fade-in-1 { animation-delay:0.1s; }
+.fade-in-2 { animation-delay:0.2s; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);} }
+.alert-card {
+    background: var(--bg-panel);
+    border: 1px solid var(--bg-hover);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: transform 0.2s, border-color 0.2s;
+    border-left: 3px solid transparent;
+}
+.alert-card:hover { transform: translateX(4px); }
+.alert-card.active { border-left-color: var(--cyan); }
+.alert-card.triggered { border-left-color: var(--teal); background: rgba(69,162,158,0.05); }
+.alert-form {
+    background: var(--bg-panel);
+    border: 1px solid var(--bg-hover);
+    border-radius: 14px;
+    padding: 24px;
+}
+.form-input {
+    width: 100%;
+    background: #111318;
+    border: 1px solid var(--bg-hover);
+    color: var(--text-main);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+    margin-bottom: 12px;
+}
+.form-input:focus { border-color: var(--cyan); }
+.form-select {
+    width: 100%;
+    background: #111318;
+    border: 1px solid var(--bg-hover);
+    color: var(--text-main);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 14px;
+    outline: none;
+    margin-bottom: 12px;
+}
+.bell-ring { animation: bellRing 1s ease-in-out infinite; }
+@keyframes bellRing {
+    0%,100% { transform: rotate(0); }
+    25% { transform: rotate(15deg); }
+    75% { transform: rotate(-15deg); }
+}
+</style>
+{% endblock %}
+{% block alert_active %}active{% endblock %}
+
+{% block content %}
+
+{% if triggered %}
+<div style="background:rgba(69,162,158,0.1); border:1px solid rgba(69,162,158,0.3); border-radius:12px; padding:16px; margin-bottom:20px;">
+    <i class="fas fa-bell bell-ring me-2" style="color:var(--teal);"></i>
+    <strong style="color:var(--teal);">Alert Triggered!</strong>
+    <span style="color:#888; margin-left:8px;">{{ triggered|join:", " }} reached your target price!</span>
+</div>
+{% endif %}
+
+<div class="row g-3">
+    <div class="col-md-8 fade-in fade-in-1">
+        <div class="chart-container">
+            <div class="section-header mb-3">
+                <div class="section-title">
+                    <i class="fas fa-bell me-2" style="color:var(--amber);"></i>My Alerts
+                </div>
+                <a href="{% url 'check_alerts' %}" class="btn-cyan" style="text-decoration:none; font-size:13px;">
+                    <i class="fas fa-sync me-1"></i>Check Now
+                </a>
+            </div>
+
+            {% if alerts %}
+                {% for alert in alerts %}
+                <div class="alert-card {{ alert.status|lower }}">
+                    <div style="display:flex; align-items:center; gap:16px;">
+                        <div style="width:40px; height:40px; background:{% if alert.status == 'TRIGGERED' %}rgba(69,162,158,0.15){% else %}rgba(102,252,241,0.1){% endif %}; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; color:{% if alert.status == 'TRIGGERED' %}var(--teal){% else %}var(--cyan){% endif %};">
+                            {{ alert.symbol|slice:":2" }}
+                        </div>
+                        <div>
+                            <div style="font-weight:600; color:#fff; font-size:14px;">{{ alert.symbol }}</div>
+                            <div style="font-size:11px; color:#888;">{{ alert.company_name|truncatechars:25 }}</div>
+                        </div>
+                    </div>
+
+                    <div style="text-align:center;">
+                        <div style="font-size:11px; color:#888;">Type</div>
+                        <span style="font-size:12px; font-weight:600; color:{% if alert.alert_type == 'PRICE_ABOVE' %}var(--teal){% else %}var(--crimson){% endif %};">
+                            {% if alert.alert_type == 'PRICE_ABOVE' %}
+                            <i class="fas fa-arrow-up me-1"></i>Above
+                            {% else %}
+                            <i class="fas fa-arrow-down me-1"></i>Below
+                            {% endif %}
+                        </span>
+                    </div>
+
+                    <div style="text-align:center;">
+                        <div style="font-size:11px; color:#888;">Target</div>
+                        <div style="font-size:15px; font-weight:700; color:#fff;">₹{{ alert.target_price }}</div>
+                    </div>
+
+                    <div style="text-align:center;">
+                        <div style="font-size:11px; color:#888;">Current</div>
+                        <div style="font-size:15px; font-weight:700; color:var(--cyan);">₹{{ alert.current_price }}</div>
+                    </div>
+
+                    <div style="text-align:center;">
+                        <div style="font-size:11px; color:#888;">Status</div>
+                        <span class="{% if alert.status == 'TRIGGERED' %}badge-positive{% else %}indicator-badge{% endif %}" style="font-size:11px;">
+                            {% if alert.status == 'TRIGGERED' %}
+                            <i class="fas fa-check me-1"></i>Triggered
+                            {% else %}
+                            <i class="fas fa-clock me-1"></i>Active
+                            {% endif %}
+                        </span>
+                    </div>
+
+                    <a href="{% url 'delete_alert' alert.pk %}"
+                       onclick="return confirm('Delete this alert?')"
+                       style="background:rgba(195,7,63,0.15); color:var(--crimson); border:1px solid rgba(195,7,63,0.3); padding:6px 12px; border-radius:6px; font-size:12px; text-decoration:none;">
+                        <i class="fas fa-trash"></i>
+                    </a>
+                </div>
+                {% endfor %}
+            {% else %}
+            <div style="text-align:center; padding:60px;">
+                <i class="fas fa-bell" style="font-size:48px; color:#2A3545; margin-bottom:16px;"></i>
+                <p style="color:#888;">No alerts set yet</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-md-4 fade-in fade-in-2">
+        <div class="alert-form">
+            <div class="section-title mb-3">
+                <i class="fas fa-plus me-2" style="color:var(--cyan);"></i>Create Alert
+            </div>
+            <form method="POST" action="{% url 'add_alert' %}">
+                {% csrf_token %}
+                <label style="font-size:12px; color:#888; margin-bottom:4px; display:block;">Stock Symbol</label>
+                <input type="text" name="symbol" placeholder="e.g. TCS, RELIANCE" class="form-input" style="text-transform:uppercase;" required>
+
+                <label style="font-size:12px; color:#888; margin-bottom:4px; display:block;">Alert Type</label>
+                <select name="alert_type" class="form-select" required>
+                    <option value="PRICE_ABOVE">Price Goes Above ▲</option>
+                    <option value="PRICE_BELOW">Price Goes Below ▼</option>
+                </select>
+
+                <label style="font-size:12px; color:#888; margin-bottom:4px; display:block;">Target Price (₹)</label>
+                <input type="number" name="target_price" placeholder="Enter target price" class="form-input" step="0.01" min="0.01" required>
+
+                <button type="submit" class="btn-cyan w-100" style="padding:12px;">
+                    <i class="fas fa-bell me-2"></i>Create Alert
+                </button>
+            </form>
+        </div>
+
+        <div class="chart-container mt-3">
+            <div class="section-title mb-3">
+                <i class="fas fa-info-circle me-2" style="color:var(--violet);"></i>How Alerts Work
+            </div>
+            <div style="font-size:13px; color:#888; line-height:1.8;">
+                <p><i class="fas fa-arrow-up me-2" style="color:var(--teal);"></i><strong style="color:#fff;">Price Above</strong> — Alert when stock crosses your target upward</p>
+                <p><i class="fas fa-arrow-down me-2" style="color:var(--crimson);"></i><strong style="color:#fff;">Price Below</strong> — Alert when stock falls below your target</p>
+                <p><i class="fas fa-sync me-2" style="color:var(--cyan);"></i>Click <strong style="color:#fff;">Check Now</strong> to update prices</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

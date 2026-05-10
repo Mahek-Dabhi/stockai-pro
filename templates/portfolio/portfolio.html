@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+<style>
+.fade-in { animation: fadeIn 0.6s ease-out forwards; opacity:0; }
+.fade-in-1 { animation-delay:0.1s; }
+.fade-in-2 { animation-delay:0.2s; }
+.fade-in-3 { animation-delay:0.3s; }
+.fade-in-4 { animation-delay:0.4s; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);} }
+.slide-up { animation: slideUp 0.5s ease-out forwards; opacity:0; }
+.slide-up-1 { animation-delay:0.3s; }
+@keyframes slideUp { from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);} }
+.pnl-positive { color: var(--teal); }
+.pnl-negative { color: var(--crimson); }
+</style>
+{% endblock %}
+{% block port_active %}active{% endblock %}
+
+{% block content %}
+<div class="section-header fade-in fade-in-1">
+    <div>
+        <h4 style="color:#fff; margin:0; font-size:20px; font-weight:700;">
+            <span style="color:var(--cyan);">⬡</span> Portfolio
+        </h4>
+        <p style="color:#888; font-size:12px; margin:2px 0 0;">Track your investments</p>
+    </div>
+    <div style="display:flex; gap:10px;">
+        <a href="{% url 'trade_history' %}" class="btn-cyan" style="text-decoration:none; font-size:13px;">
+            <i class="fas fa-history me-1"></i>History
+        </a>
+        <a href="{% url 'add_stock' %}" class="btn-cyan" style="text-decoration:none; font-size:13px;">
+            <i class="fas fa-plus me-1"></i>Add Stock
+        </a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3 fade-in fade-in-1">
+        <div class="stat-card">
+            <div class="stat-label"><i class="fas fa-wallet me-1"></i>Total Invested</div>
+            <div class="stat-value text-cyan">₹{{ total_invested }}</div>
+        </div>
+    </div>
+    <div class="col-md-3 fade-in fade-in-2">
+        <div class="stat-card">
+            <div class="stat-label"><i class="fas fa-chart-line me-1"></i>Current Value</div>
+            <div class="stat-value" style="color:#fff;">₹{{ total_current }}</div>
+        </div>
+    </div>
+    <div class="col-md-3 fade-in fade-in-3">
+        <div class="stat-card">
+            <div class="stat-label"><i class="fas fa-rupee-sign me-1"></i>Total P&L</div>
+            <div class="stat-value {% if is_profit %}pnl-positive{% else %}pnl-negative{% endif %}">
+                {% if is_profit %}+{% endif %}₹{{ total_pnl }}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 fade-in fade-in-4">
+        <div class="stat-card">
+            <div class="stat-label"><i class="fas fa-percent me-1"></i>Returns</div>
+            <div class="stat-value {% if is_profit %}pnl-positive{% else %}pnl-negative{% endif %}">
+                {% if is_profit %}+{% endif %}{{ total_pnl_pct }}%
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="chart-container slide-up slide-up-1">
+    <div class="section-header mb-3">
+        <div class="section-title"><i class="fas fa-briefcase me-2" style="color:var(--cyan);"></i>Holdings</div>
+        <span style="font-size:12px; color:#888;">{{ portfolio_data|length }} stocks</span>
+    </div>
+
+    {% if portfolio_data %}
+    <table class="stock-table">
+        <thead>
+            <tr>
+                <th>Stock</th>
+                <th>Qty</th>
+                <th>Buy Price</th>
+                <th>Current</th>
+                <th>Invested</th>
+                <th>Current Value</th>
+                <th>P&L</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in portfolio_data %}
+            <tr>
+                <td>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <div style="width:34px; height:34px; background:{% if item.is_profit %}rgba(69,162,158,0.15){% else %}rgba(195,7,63,0.15){% endif %}; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; color:{% if item.is_profit %}var(--teal){% else %}var(--crimson){% endif %};">
+                            {{ item.holding.symbol|slice:":2" }}
+                        </div>
+                        <div>
+                            <div class="stock-symbol">{{ item.holding.symbol }}</div>
+                            <div style="font-size:11px; color:#666;">{{ item.holding.company_name|truncatechars:18 }}</div>
+                        </div>
+                    </div>
+                </td>
+                <td style="color:#fff;">{{ item.holding.quantity }}</td>
+                <td style="color:#888;">₹{{ item.holding.buy_price }}</td>
+                <td style="color:#fff; font-weight:600;">₹{{ item.current_price }}</td>
+                <td style="color:#888;">₹{{ item.holding.total_invested }}</td>
+                <td style="color:#fff; font-weight:600;">₹{{ item.current_value }}</td>
+                <td>
+                    <span class="{% if item.is_profit %}badge-positive{% else %}badge-negative{% endif %}">
+                        {% if item.is_profit %}+{% endif %}₹{{ item.pnl }}
+                        <br>
+                        <small>{% if item.is_profit %}+{% endif %}{{ item.pnl_pct }}%</small>
+                    </span>
+                </td>
+                <td>
+                    <a href="{% url 'sell_stock' item.holding.pk %}"
+                       onclick="return confirm('Sell {{ item.holding.symbol }}?')"
+                       style="background:rgba(195,7,63,0.15); color:var(--crimson); border:1px solid rgba(195,7,63,0.3); padding:4px 12px; border-radius:6px; font-size:12px; text-decoration:none;">
+                        <i class="fas fa-times me-1"></i>Sell
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div style="text-align:center; padding:60px 20px;">
+        <i class="fas fa-briefcase" style="font-size:48px; color:#2A3545; margin-bottom:16px;"></i>
+        <p style="color:#888; font-size:16px;">No holdings yet</p>
+        <a href="{% url 'add_stock' %}" class="btn-cyan mt-3" style="text-decoration:none;">
+            <i class="fas fa-plus me-1"></i>Add Your First Stock
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,533 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+<style>
+.fade-in { animation: fadeIn 0.6s ease-out forwards; opacity: 0; }
+.fade-in-1 { animation-delay: 0.1s; }
+.fade-in-2 { animation-delay: 0.2s; }
+.fade-in-3 { animation-delay: 0.3s; }
+.fade-in-4 { animation-delay: 0.4s; }
+.slide-up { animation: slideUp 0.5s ease-out forwards; opacity: 0; }
+.slide-up-1 { animation-delay: 0.2s; }
+.slide-up-2 { animation-delay: 0.35s; }
+.slide-up-3 { animation-delay: 0.5s; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+@keyframes slideUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+.stat-card { transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s; }
+.stat-card:hover { transform: translateY(-4px); border-color: var(--cyan); box-shadow: 0 8px 24px rgba(102,252,241,0.1); }
+.number-pop { animation: numberPop 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+@keyframes numberPop { 0% { transform:scale(0.8); opacity:0; } 60% { transform:scale(1.05); } 100% { transform:scale(1); opacity:1; } }
+.market-open-pulse { animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(69,162,158,0.4); } 50% { box-shadow: 0 0 0 8px rgba(69,162,158,0); } }
+.chart-btn { background:transparent; border:1px solid #2A3545; color:#888; padding:4px 12px; border-radius:6px; font-size:11px; cursor:pointer; transition:all 0.2s; }
+.chart-btn:hover { border-color:var(--cyan); color:var(--cyan); }
+.chart-btn.active { background:rgba(102,252,241,0.15); border-color:#66FCF1; color:#66FCF1; }
+.candle-legend { display:flex; gap:16px; font-size:11px; margin-top:10px; align-items:center; }
+.candle-legend .dot { width:10px; height:10px; border-radius:2px; display:inline-block; margin-right:4px; }
+#watchlist { scroll-margin-top: 80px; }
+#watchlist.highlight { animation: wlPop 1.2s ease-out forwards; }
+@keyframes wlPop { 0%{box-shadow:0 0 0 0 rgba(102,252,241,0.5);} 40%{box-shadow:0 0 0 10px rgba(102,252,241,0.15);} 100%{box-shadow:0 0 0 0 rgba(102,252,241,0);} }
+
+/* ── Market overlay blink ── */
+@keyframes redBlink {
+    0%   { background: transparent; }
+    15%  { background: rgba(195, 7, 63, 0.25); }  /* stronger */
+    30%  { background: transparent; }
+    55%  { background: rgba(195, 7, 63, 0.18); }  /* stronger */
+    70%  { background: transparent; }
+    100% { background: transparent; }
+}
+@keyframes greenPulse {
+    0%   { background: transparent; }
+    40%  { background: rgba(69,162,158,0.08); }
+    100% { background: transparent; }
+}
+#market-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 9;
+    transition: opacity 0.5s;
+}
+#market-overlay.market-down-blink {
+    animation: redBlink 2.5s ease-in-out infinite !important;
+}
+#market-overlay.market-up-pulse {
+    animation: greenPulse 3s ease-in-out infinite !important;
+}
+</style>
+{% endblock %}
+{% block dash_active %}active{% endblock %}
+
+{% block content %}
+
+{% if featured %}
+<!-- Market mood overlay — updated dynamically on refresh -->
+<div id="market-overlay"
+     class="{% if not featured.is_positive %}market-down-blink{% else %}market-up-pulse{% endif %}">
+</div>
+{% endif %}
+
+<div class="section-header fade-in fade-in-1">
+  <div>
+    <h4 style="color:#fff;margin:0;font-size:20px;font-weight:700;"><span style="color:var(--cyan);">⬡</span> Command Center</h4>
+    <p style="color:#888;font-size:12px;margin:2px 0 0;">NSE · BSE · Real-time Data</p>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <span style="color:#888;font-size:12px;font-family:monospace;" id="current-time"></span>
+    {% if market_open %}
+    <span class="market-status-open market-open-pulse"><i class="fas fa-circle me-1" style="font-size:8px;"></i>Market Open</span>
+    {% else %}
+    <span class="market-status-closed"><i class="fas fa-circle me-1" style="font-size:8px;"></i>Market Closed</span>
+    {% endif %}
+  </div>
+</div>
+
+<div class="ticker-wrap fade-in fade-in-1">
+  <div class="ticker-move">
+    {% for stock in stocks %}
+    <span class="ticker-item">
+      <span class="ticker-symbol">{{ stock.symbol }}</span>
+      <span class="ticker-price">&#8377;{{ stock.price }}</span>
+      <span class="{% if stock.is_positive %}text-teal{% else %}text-crimson{% endif %}">{% if stock.is_positive %}&#9650;{% else %}&#9660;{% endif %}{{ stock.change_pct }}%</span>
+    </span>
+    {% endfor %}
+    {% for stock in stocks %}
+    <span class="ticker-item">
+      <span class="ticker-symbol">{{ stock.symbol }}</span>
+      <span class="ticker-price">&#8377;{{ stock.price }}</span>
+      <span class="{% if stock.is_positive %}text-teal{% else %}text-crimson{% endif %}">{% if stock.is_positive %}&#9650;{% else %}&#9660;{% endif %}{{ stock.change_pct }}%</span>
+    </span>
+    {% endfor %}
+  </div>
+</div>
+
+{% if featured %}
+<div class="row g-3 mb-4">
+  <div class="col-md-3 fade-in fade-in-1">
+    <div class="stat-card {% if not featured.is_positive %}red-card{% endif %}">
+      <div class="stat-label"><i class="fas fa-tag me-1"></i>{{ featured.symbol }}</div>
+      <div class="stat-value text-cyan number-pop" style="font-size:26px;">&#8377;{{ featured.price }}</div>
+      <div class="stat-change {% if featured.is_positive %}text-teal{% else %}text-crimson{% endif %}" style="font-size:13px;">
+        {% if featured.is_positive %}<i class="fas fa-arrow-up me-1"></i>{% else %}<i class="fas fa-arrow-down me-1"></i>{% endif %}
+        &#8377;{{ featured.change }} ({{ featured.change_pct }}%)
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3 fade-in fade-in-2">
+    <div class="stat-card">
+      <div class="stat-label"><i class="fas fa-arrow-up me-1"></i>Day High</div>
+      <div class="stat-value text-teal number-pop">&#8377;{{ featured.high }}</div>
+      <div class="stat-change" style="color:#555;font-size:12px;">Today's High</div>
+    </div>
+  </div>
+  <div class="col-md-3 fade-in fade-in-3">
+    <div class="stat-card red-card">
+      <div class="stat-label"><i class="fas fa-arrow-down me-1"></i>Day Low</div>
+      <div class="stat-value text-crimson number-pop">&#8377;{{ featured.low }}</div>
+      <div class="stat-change" style="color:#555;font-size:12px;">Today's Low</div>
+    </div>
+  </div>
+  <div class="col-md-3 fade-in fade-in-4">
+    <div class="stat-card">
+      <div class="stat-label"><i class="fas fa-chart-bar me-1"></i>Volume</div>
+      <div class="stat-value number-pop" style="font-size:18px;">{{ featured.volume|floatformat:0 }}</div>
+      <div class="stat-change text-violet" style="font-size:12px;"><i class="fas fa-circle me-1" style="font-size:8px;"></i>Active Trading</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-8 slide-up slide-up-1">
+    <div class="chart-container">
+      <div class="section-header mb-3">
+        <div>
+          <div class="chart-title" style="font-size:15px;">{{ featured.name }}</div>
+          <div style="font-size:11px;color:#888;">1 Month · NSE</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <div style="display:flex;gap:6px;margin-right:8px;">
+            <button onclick="buildPriceChart('line')" id="btn-line" class="chart-btn active"><i class="fas fa-chart-line me-1"></i>Line</button>
+            <button onclick="buildPriceChart('candle')" id="btn-candle" class="chart-btn"><i class="fas fa-chart-bar me-1"></i>Candle</button>
+          </div>
+          <span class="indicator-badge" id="ma20-badge"><i class="fas fa-chart-line me-1"></i>MA20</span>
+          <span class="indicator-badge" style="color:var(--amber);border-color:rgba(245,166,35,0.3);background:rgba(245,166,35,0.1);"><i class="fas fa-tachometer-alt me-1"></i>RSI</span>
+        </div>
+      </div>
+      <canvas id="priceChart" height="110"></canvas>
+      <div class="candle-legend" id="candle-legend" style="display:none;">
+        <span><span class="dot" style="background:#45A29E;"></span><span style="color:#45A29E;">Bullish</span><span style="color:#555;font-size:10px;"> Close &gt; Open</span></span>
+        <span><span class="dot" style="background:#C3073F;"></span><span style="color:#C3073F;">Bearish</span><span style="color:#555;font-size:10px;"> Close &lt; Open</span></span>
+        <span style="color:#555;font-size:10px;margin-left:auto;"><i class="fas fa-info-circle me-1"></i>Wicks show High / Low</span>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4 slide-up slide-up-2">
+    <div class="chart-container" style="height:100%;">
+      <div class="section-header mb-2">
+        <div class="chart-title" style="font-size:14px;"><i class="fas fa-tachometer-alt me-2" style="color:var(--amber);"></i>RSI (14)</div>
+        <span id="rsi-value" style="font-size:18px;font-weight:700;color:var(--amber);">--</span>
+      </div>
+      <canvas id="rsiChart" height="180"></canvas>
+      <div style="margin-top:12px;display:flex;gap:12px;font-size:11px;flex-wrap:wrap;">
+        <span style="color:var(--teal);"><i class="fas fa-circle me-1" style="font-size:8px;"></i>&lt;30 Oversold</span>
+        <span style="color:var(--crimson);"><i class="fas fa-circle me-1" style="font-size:8px;"></i>&gt;70 Overbought</span>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div class="row g-3 slide-up slide-up-3">
+  <div class="col-md-8">
+    <div class="chart-container">
+      <div class="section-header mb-3">
+        <div class="section-title"><i class="fas fa-globe me-2" style="color:var(--cyan);"></i>Market Overview</div>
+        <span style="font-size:11px;color:#888;background:rgba(102,252,241,0.05);padding:4px 10px;border-radius:6px;border:1px solid rgba(102,252,241,0.1);">NSE Listed</span>
+      </div>
+      <table class="stock-table">
+        <thead><tr><th>Symbol</th><th>Company</th><th>Price</th><th>Change</th><th>Volume</th></tr></thead>
+        <tbody>
+          {% for stock in stocks %}
+          <tr onclick="window.location='{% url 'stock_detail' stock.symbol %}'" style="cursor:pointer;">
+            <td>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div style="width:34px;height:34px;background:{% if stock.is_positive %}rgba(69,162,158,0.15){% else %}rgba(195,7,63,0.15){% endif %};border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:{% if stock.is_positive %}var(--teal){% else %}var(--crimson){% endif %};">{{ stock.symbol|slice:":2" }}</div>
+                <span class="stock-symbol">{{ stock.symbol }}</span>
+              </div>
+            </td>
+            <td style="color:#888;font-size:13px;">{{ stock.name|truncatechars:22 }}</td>
+            <td style="font-weight:700;color:#fff;font-size:15px;">&#8377;{{ stock.price }}</td>
+            <td>
+              <span class="{% if stock.is_positive %}badge-positive{% else %}badge-negative{% endif %}">
+                {% if stock.is_positive %}<i class="fas fa-arrow-up me-1" style="font-size:9px;"></i>+{% else %}<i class="fas fa-arrow-down me-1" style="font-size:9px;"></i>{% endif %}{{ stock.change_pct }}%
+              </span>
+            </td>
+            <td style="color:#666;font-size:12px;">{{ stock.volume|floatformat:0 }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="col-md-4" id="watchlist">
+    <div class="chart-container">
+      <div class="section-title mb-3"><i class="fas fa-star me-2" style="color:var(--amber);"></i>Watchlist</div>
+      {% for stock in stocks %}
+      <div class="watchlist-item" onclick="window.location='{% url 'stock_detail' stock.symbol %}'" style="cursor:pointer;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:36px;height:36px;background:{% if stock.is_positive %}rgba(69,162,158,0.12){% else %}rgba(195,7,63,0.12){% endif %};border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:{% if stock.is_positive %}var(--teal){% else %}var(--crimson){% endif %};">{{ stock.symbol|slice:":2" }}</div>
+            <div>
+              <div style="font-weight:600;color:#fff;font-size:13px;">{{ stock.symbol }}</div>
+              <div style="font-size:10px;color:#666;">{{ stock.name|truncatechars:16 }}</div>
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <div style="color:#fff;font-size:14px;font-weight:700;">&#8377;{{ stock.price }}</div>
+            <div class="{% if stock.is_positive %}text-teal{% else %}text-crimson{% endif %}" style="font-size:12px;font-weight:600;">{% if stock.is_positive %}&#9650;{% else %}&#9660;{% endif %}{{ stock.change_pct }}%</div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.3.1/dist/chartjs-adapter-luxon.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial@0.1.1/dist/chartjs-chart-financial.min.js"></script>
+<script>
+// ── Chart data from Django context ────────────────────────────────────────
+const dates   = {% autoescape off %}{{ featured.chart_dates_json }}{% endautoescape %};
+const prices  = {% autoescape off %}{{ featured.chart_prices_json }}{% endautoescape %};
+const ma20    = {% autoescape off %}{{ featured.ma20_json }}{% endautoescape %};
+const rsi     = {% autoescape off %}{{ featured.rsi_json }}{% endautoescape %};
+const ohlcRaw = {% autoescape off %}{{ featured.ohlc_json }}{% endautoescape %};
+
+const todayMs    = Date.now(), MS_PER_DAY = 86400000;
+const candleData = ohlcRaw.map((d, i) => ({
+  x: todayMs - (ohlcRaw.length - 1 - i) * MS_PER_DAY,
+  o: d.o, h: d.h, l: d.l, c: d.c
+}));
+
+Chart.defaults.color       = '#666';
+Chart.defaults.font.family = 'Segoe UI';
+const C = {
+  cyan: '#66FCF1', teal: '#45A29E', crimson: '#C3073F',
+  blue: '#3B82F6', amber: '#F5A623', panel: '#111318',
+  grid: 'rgba(42,53,69,0.35)'
+};
+
+function mkTooltip(bc) {
+  return {
+    backgroundColor: C.panel, borderColor: bc || C.cyan, borderWidth: 1,
+    titleColor: bc || C.cyan, bodyColor: '#C5C6C7', padding: 10, cornerRadius: 6
+  };
+}
+function getYRange(data) {
+  const v = data.flatMap(d => [d.o, d.h, d.l, d.c]);
+  const lo = Math.min(...v), hi = Math.max(...v), p = (hi - lo) * 0.08;
+  return { min: Math.floor(lo - p), max: Math.ceil(hi + p) };
+}
+
+// ── Price Chart (Line / Candlestick) ──────────────────────────────────────
+let priceChart = null;
+function buildPriceChart(type) {
+  document.getElementById('btn-line').classList.toggle('active', type === 'line');
+  document.getElementById('btn-candle').classList.toggle('active', type === 'candle');
+  document.getElementById('ma20-badge').style.opacity    = type === 'line' ? '1' : '0.35';
+  document.getElementById('candle-legend').style.display = type === 'candle' ? 'flex' : 'none';
+  if (priceChart) { priceChart.destroy(); priceChart = null; }
+  const ctx = document.getElementById('priceChart').getContext('2d');
+  if (type === 'line') {
+    const grad = ctx.createLinearGradient(0, 0, 0, 300);
+    grad.addColorStop(0, 'rgba(102,252,241,0.18)');
+    grad.addColorStop(1, 'rgba(102,252,241,0)');
+    priceChart = new Chart(ctx, {
+      type: 'line',
+      data: { labels: dates, datasets: [
+        { label: 'Price', data: prices, borderColor: C.cyan, backgroundColor: grad,
+          borderWidth: 2.5, pointRadius: 0, pointHoverRadius: 5, fill: true, tension: 0.4, spanGaps: true },
+        { label: 'MA20',  data: ma20,   borderColor: C.blue, borderWidth: 2,
+          pointRadius: 0, fill: false, tension: 0.4, borderDash: [6, 3], spanGaps: true }
+      ]},
+      options: {
+        responsive: true, animation: { duration: 800, easing: 'easeInOutQuart' },
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { labels: { color: '#888', font: { size: 11 } } },
+          tooltip: { ...mkTooltip(C.cyan), callbacks: { label: c => c.raw !== null ? ` \u20B9${c.raw}` : '' } }
+        },
+        scales: {
+          x: { ticks: { color: '#555', maxTicksLimit: 8 }, grid: { color: C.grid } },
+          y: { ticks: { color: '#555', callback: v => '\u20B9' + v }, grid: { color: C.grid } }
+        }
+      }
+    });
+  } else {
+    const { min: yMin, max: yMax } = getYRange(ohlcRaw);
+    priceChart = new Chart(ctx, {
+      type: 'candlestick',
+      data: { datasets: [{ label: 'OHLC', data: candleData,
+        color: { up: C.teal, down: C.crimson, unchanged: '#888' },
+        borderColor: { up: C.teal, down: C.crimson, unchanged: '#888' }
+      }]},
+      options: {
+        responsive: true, animation: { duration: 700, easing: 'easeOutQuart' },
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: { ...mkTooltip(C.cyan), callbacks: {
+            title: items => {
+              const d = new Date(items[0].parsed.x);
+              return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+            },
+            label: item => {
+              const d = item.raw, dir = d.c >= d.o ? '\u25B2 Bullish' : '\u25BC Bearish';
+              const chg = (d.c - d.o).toFixed(2);
+              return [`  ${dir}`, `  Open:  \u20B9${d.o}`, `  High:  \u20B9${d.h}`,
+                      `  Low:   \u20B9${d.l}`, `  Close: \u20B9${d.c}`,
+                      `  Change: ${d.c >= d.o ? '+' : ''}${chg}`];
+            },
+            labelColor: item => {
+              const col = item.raw.c >= item.raw.o ? C.teal : C.crimson;
+              return { borderColor: col, backgroundColor: col };
+            }
+          }}
+        },
+        scales: {
+          x: { type: 'time', time: { unit: 'day', displayFormats: { day: 'dd MMM' }, tooltipFormat: 'dd MMM yyyy' },
+               ticks: { color: '#555', maxTicksLimit: 8 }, grid: { color: C.grid } },
+          y: { min: yMin, max: yMax, ticks: { color: '#555', callback: v => '\u20B9' + v }, grid: { color: C.grid } }
+        }
+      }
+    });
+  }
+}
+buildPriceChart('line');
+
+// ── RSI Chart ─────────────────────────────────────────────────────────────
+(function () {
+  const ctx  = document.getElementById('rsiChart').getContext('2d');
+  const grad = ctx.createLinearGradient(0, 0, 0, 200);
+  grad.addColorStop(0, 'rgba(245,166,35,0.15)');
+  grad.addColorStop(1, 'rgba(245,166,35,0)');
+  new Chart(ctx, {
+    type: 'line',
+    data: { labels: dates, datasets: [{
+      data: rsi, borderColor: C.amber, backgroundColor: grad,
+      borderWidth: 2, pointRadius: 0, fill: true, tension: 0.4, spanGaps: true
+    }]},
+    options: {
+      responsive: true, animation: { duration: 1800, easing: 'easeInOutQuart' },
+      plugins: {
+        legend: { display: false },
+        tooltip: { ...mkTooltip(C.amber), callbacks: { label: c => ` RSI: ${Number(c.raw).toFixed(1)}` } }
+      },
+      scales: {
+        x: { ticks: { color: '#555', font: { size: 9 }, maxTicksLimit: 5 }, grid: { color: C.grid } },
+        y: {
+          min: 0, max: 100,
+          ticks: { color: '#555', font: { size: 9 },
+            callback: v => v === 30 ? '30' : v === 70 ? '70' : v === 50 ? '50' : (v % 25 === 0 ? v : '')
+          },
+          grid: {
+            color:     ctx => ctx.tick.value === 70 ? 'rgba(195,7,63,0.45)' : ctx.tick.value === 30 ? 'rgba(69,162,158,0.45)' : C.grid,
+            lineWidth: ctx => (ctx.tick.value === 70 || ctx.tick.value === 30) ? 1.5 : 0.5
+          }
+        }
+      }
+    }
+  });
+  const vr = rsi.filter(v => v !== null);
+  if (vr.length) {
+    const last = vr[vr.length - 1], el = document.getElementById('rsi-value');
+    el.textContent = last.toFixed(1);
+    el.style.color = last > 70 ? C.crimson : last < 30 ? C.teal : C.amber;
+  }
+})();
+
+// ── Clock (overridden by countdown IIFE below) ────────────────────────────
+function updateTime() {
+  document.getElementById('current-time').textContent =
+    new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+updateTime();
+
+// ── Watchlist scroll + highlight ──────────────────────────────────────────
+if (window.location.hash === '#watchlist') {
+  setTimeout(() => {
+    const el = document.getElementById('watchlist');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      el.classList.add('highlight');
+      setTimeout(() => el.classList.remove('highlight'), 1400);
+    }
+  }, 400);
+}
+
+// ── Market overlay updater ────────────────────────────────────────────────
+function updateMarketOverlay(isPositive) {
+  const overlay = document.getElementById('market-overlay');
+  if (!overlay) return;
+  overlay.className = isPositive ? 'market-up-pulse' : 'market-down-blink';
+}
+
+// ── Auto-refresh stock data every 45 seconds ──────────────────────────────
+const AUTO_REFRESH_INTERVAL = 45000;
+const FEATURED_SYMBOL = '{{ featured.symbol }}';
+const SYMBOLS = {{ stocks|safe }}.map(s => s.symbol);
+
+function refreshStockData() {
+  SYMBOLS.forEach(symbol => {
+    fetch(`/dashboard/api/stock/${symbol}/`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) return;
+        updateTickerItem(data);
+        updateMarketTable(data);
+        updateWatchlistItem(data);
+        if (data.symbol === FEATURED_SYMBOL) {
+          updateStatCards(data);
+          updateMarketOverlay(data.is_positive); // ← updates red/green blink live
+        }
+      })
+      .catch(err => console.warn(`Refresh failed for ${symbol}:`, err));
+  });
+}
+
+function updateTickerItem(data) {
+  document.querySelectorAll('.ticker-item').forEach(el => {
+    const sym = el.querySelector('.ticker-symbol');
+    if (sym && sym.textContent.trim() === data.symbol) {
+      el.querySelector('.ticker-price').textContent = '₹' + data.price;
+      const chg = el.querySelectorAll('span')[2];
+      if (chg) {
+        chg.textContent = (data.is_positive ? '▲' : '▼') + Math.abs(data.change_pct) + '%';
+        chg.className   = data.is_positive ? 'text-teal' : 'text-crimson';
+      }
+    }
+  });
+}
+
+function updateMarketTable(data) {
+  document.querySelectorAll('.stock-table tbody tr').forEach(row => {
+    const symEl = row.querySelector('.stock-symbol');
+    if (symEl && symEl.textContent.trim() === data.symbol) {
+      const cells = row.querySelectorAll('td');
+      if (cells[2]) cells[2].textContent = '₹' + data.price;
+      if (cells[3]) {
+        const badge = cells[3].querySelector('span');
+        if (badge) {
+          badge.textContent = (data.is_positive ? '+' : '') + data.change_pct + '%';
+          badge.className   = data.is_positive ? 'badge-positive' : 'badge-negative';
+        }
+      }
+      if (cells[4]) cells[4].textContent = data.volume.toLocaleString('en-IN');
+    }
+  });
+}
+
+function updateWatchlistItem(data) {
+  document.querySelectorAll('.watchlist-item').forEach(el => {
+    const nameEl = el.querySelector('div[style*="font-weight:600"]');
+    if (nameEl && nameEl.textContent.trim() === data.symbol) {
+      const priceEl = el.querySelector('div[style*="font-size:14px"]');
+      const chgEl   = el.querySelector('div[style*="font-size:12px"]');
+      if (priceEl) priceEl.textContent = '₹' + data.price;
+      if (chgEl) {
+        chgEl.textContent = (data.is_positive ? '▲' : '▼') + Math.abs(data.change_pct) + '%';
+        chgEl.className   = data.is_positive ? 'text-teal' : 'text-crimson';
+      }
+    }
+  });
+}
+
+function updateStatCards(data) {
+  const priceEl = document.querySelector('.stat-value.text-cyan');
+  if (priceEl) priceEl.textContent = '₹' + data.price;
+  const changeEl = document.querySelector('.stat-change.text-teal, .stat-change.text-crimson');
+  if (changeEl) {
+    changeEl.textContent = `₹${data.change} (${data.change_pct}%)`;
+    changeEl.className   = `stat-change ${data.is_positive ? 'text-teal' : 'text-crimson'}`;
+  }
+}
+
+function showRefreshPulse() {
+  const badge = document.querySelector('.live-badge');
+  if (badge) {
+    badge.style.opacity = '0.4';
+    setTimeout(() => badge.style.opacity = '1', 400);
+  }
+}
+
+// ── Countdown timer + clock ───────────────────────────────────────────────
+(function () {
+  let countdown = AUTO_REFRESH_INTERVAL / 1000;
+  setInterval(() => {
+    countdown--;
+    if (countdown <= 0) countdown = AUTO_REFRESH_INTERVAL / 1000;
+    const clockEl = document.getElementById('current-time');
+    if (clockEl) {
+      const base = new Date().toLocaleTimeString('en-IN', {
+        hour: '2-digit', minute: '2-digit', second: '2-digit'
+      });
+      clockEl.textContent = `${base}  ·  refresh in ${countdown}s`;
+    }
+  }, 1000);
+})();
+
+// ── Start polling ─────────────────────────────────────────────────────────
+setInterval(() => {
+  refreshStockData();
+  showRefreshPulse();
+}, AUTO_REFRESH_INTERVAL);
+</script>
+{% endblock %}

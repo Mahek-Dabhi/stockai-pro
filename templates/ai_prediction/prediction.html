@@ -1,0 +1,358 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+<style>
+.fade-in { animation: fadeIn 0.6s ease-out forwards; opacity:0; }
+.fade-in-1 { animation-delay:0.1s; }
+.fade-in-2 { animation-delay:0.2s; }
+.fade-in-3 { animation-delay:0.3s; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);} }
+.prediction-card {
+    background: var(--bg-panel);
+    border: 1px solid var(--bg-hover);
+    border-radius: 14px;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.prediction-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 32px rgba(102,252,241,0.1);
+}
+.prediction-card::before {
+    content:'';
+    position:absolute;
+    top:0; left:0;
+    width:100%; height:3px;
+}
+.card-linear::before { background: linear-gradient(90deg, #3B82F6, transparent); }
+.card-lstm::before { background: linear-gradient(90deg, #C8A0FF, transparent); }
+.trend-bullish {
+    background: rgba(69,162,158,0.15);
+    color: var(--teal);
+    border: 1px solid rgba(69,162,158,0.3);
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.trend-bearish {
+    background: rgba(195,7,63,0.15);
+    color: var(--crimson);
+    border: 1px solid rgba(195,7,63,0.3);
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.confidence-bar {
+    height: 8px;
+    background: var(--bg-hover);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 8px;
+}
+.confidence-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #66FCF1, #45A29E);
+    transition: width 1.5s ease-out;
+}
+.symbol-btn {
+    background: var(--bg-hover);
+    border: 1px solid rgba(102,252,241,0.1);
+    color: var(--text-main);
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s;
+    display: inline-block;
+}
+.symbol-btn:hover, .symbol-btn.active {
+    background: rgba(102,252,241,0.1);
+    border-color: var(--cyan);
+    color: var(--cyan);
+}
+.search-input {
+    background: #111318;
+    border: 1px solid var(--bg-hover);
+    color: var(--text-main);
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+    width: 200px;
+}
+.search-input:focus { border-color: var(--cyan); }
+</style>
+{% endblock %}
+{% block pred_active %}active{% endblock %}
+
+{% block content %}
+<div class="section-header fade-in fade-in-1">
+    <div>
+        <h4 style="color:#fff; margin:0; font-size:20px; font-weight:700;">
+            <span style="color:var(--violet);">⬡</span> AI Prediction
+        </h4>
+        <p style="color:#888; font-size:12px; margin:2px 0 0;">ML-powered stock trend prediction</p>
+    </div>
+    <form method="GET" style="display:flex; gap:8px; align-items:center;">
+        <input type="text" name="symbol" value="{{ symbol }}" placeholder="Enter symbol..." class="search-input" style="text-transform:uppercase;">
+        <button type="submit" class="btn-cyan" style="padding:10px 16px;">
+            <i class="fas fa-search"></i>
+        </button>
+    </form>
+</div>
+
+<div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px;" class="fade-in fade-in-1">
+    {% for s in stocks_list %}
+    <a href="?symbol={{ s }}" class="symbol-btn {% if s == symbol %}active{% endif %}">{{ s }}</a>
+    {% endfor %}
+</div>
+
+{% if stock %}
+<div class="row g-3 mb-4 fade-in fade-in-2">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-label"><i class="fas fa-tag me-1"></i>{{ symbol }}</div>
+            <div class="stat-value text-cyan">₹{{ stock.price }}</div>
+            <div class="stat-change {% if stock.is_positive %}text-teal{% else %}text-crimson{% endif %}">
+                {% if stock.is_positive %}▲{% else %}▼{% endif %} {{ stock.change_pct }}%
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-label"><i class="fas fa-arrow-up me-1"></i>Day High</div>
+            <div class="stat-value text-teal">₹{{ stock.high }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-label"><i class="fas fa-arrow-down me-1"></i>Day Low</div>
+            <div class="stat-value text-crimson">₹{{ stock.low }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-label"><i class="fas fa-chart-bar me-1"></i>Volume</div>
+            <div class="stat-value" style="font-size:16px;">{{ stock.volume|floatformat:0 }}</div>
+        </div>
+    </div>
+</div>
+
+{% if prediction %}
+<div class="row g-3 mb-4">
+    {% if prediction.linear %}
+    <div class="col-md-6 fade-in fade-in-2">
+        <div class="prediction-card card-linear">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px;">
+                <div>
+                    <div style="font-size:12px; color:#888; margin-bottom:4px;">
+                        <i class="fas fa-chart-line me-1" style="color:#3B82F6;"></i>Linear Regression
+                    </div>
+                    <div style="font-size:18px; font-weight:700; color:#fff;">Next Day Prediction</div>
+                </div>
+                <span class="{% if prediction.linear.trend == 'Bullish' %}trend-bullish{% else %}trend-bearish{% endif %}">
+                    {% if prediction.linear.trend == 'Bullish' %}
+                    <i class="fas fa-arrow-trend-up"></i>
+                    {% else %}
+                    <i class="fas fa-arrow-trend-down"></i>
+                    {% endif %}
+                    {{ prediction.linear.trend }}
+                </span>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+                <div>
+                    <div style="font-size:11px; color:#888;">Current Price</div>
+                    <div style="font-size:20px; font-weight:700; color:#fff;">₹{{ prediction.linear.current_price }}</div>
+                </div>
+                <div>
+                    <div style="font-size:11px; color:#888;">Predicted Price</div>
+                    <div style="font-size:20px; font-weight:700; color:{% if prediction.linear.trend == 'Bullish' %}var(--teal){% else %}var(--crimson){% endif %};">
+                        ₹{{ prediction.linear.predicted_price }}
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-bottom:12px;">
+                <div style="display:flex; justify-content:space-between; font-size:13px;">
+                    <span style="color:#888;">Confidence Score</span>
+                    <span style="color:var(--cyan); font-weight:700;">{{ prediction.linear.confidence }}%</span>
+                </div>
+                <div class="confidence-bar">
+                    <div class="confidence-fill" style="width:{{ prediction.linear.confidence }}%;"></div>
+                </div>
+            </div>
+
+            <div style="font-size:13px; color:#888;">
+                Expected change:
+                <span class="{% if prediction.linear.trend == 'Bullish' %}text-teal{% else %}text-crimson{% endif %} " style="font-weight:600;">
+                    {% if prediction.linear.change_pct > 0 %}+{% endif %}{{ prediction.linear.change_pct }}%
+                </span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if prediction.lstm %}
+    <div class="col-md-6 fade-in fade-in-3">
+        <div class="prediction-card card-lstm">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px;">
+                <div>
+                    <div style="font-size:12px; color:#888; margin-bottom:4px;">
+                        <i class="fas fa-brain me-1" style="color:#C8A0FF;"></i>Neural Network (LSTM)
+                    </div>
+                    <div style="font-size:18px; font-weight:700; color:#fff;">Next Day Prediction</div>
+                </div>
+                <span class="{% if prediction.lstm.trend == 'Bullish' %}trend-bullish{% else %}trend-bearish{% endif %}">
+                    {% if prediction.lstm.trend == 'Bullish' %}
+                    <i class="fas fa-arrow-trend-up"></i>
+                    {% else %}
+                    <i class="fas fa-arrow-trend-down"></i>
+                    {% endif %}
+                    {{ prediction.lstm.trend }}
+                </span>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+                <div>
+                    <div style="font-size:11px; color:#888;">Current Price</div>
+                    <div style="font-size:20px; font-weight:700; color:#fff;">₹{{ prediction.lstm.current_price }}</div>
+                </div>
+                <div>
+                    <div style="font-size:11px; color:#888;">Predicted Price</div>
+                    <div style="font-size:20px; font-weight:700; color:{% if prediction.lstm.trend == 'Bullish' %}var(--teal){% else %}var(--crimson){% endif %};">
+                        ₹{{ prediction.lstm.predicted_price }}
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-bottom:12px;">
+                <div style="display:flex; justify-content:space-between; font-size:13px;">
+                    <span style="color:#888;">Confidence Score</span>
+                    <span style="color:var(--violet); font-weight:700;">{{ prediction.lstm.confidence }}%</span>
+                </div>
+                <div class="confidence-bar">
+                    <div class="confidence-fill" style="width:{{ prediction.lstm.confidence }}%; background:linear-gradient(90deg,#C8A0FF,#3B82F6);"></div>
+                </div>
+            </div>
+
+            <div style="font-size:13px; color:#888;">
+                Expected change:
+                <span class="{% if prediction.lstm.trend == 'Bullish' %}text-teal{% else %}text-crimson{% endif %}" style="font-weight:600;">
+                    {% if prediction.lstm.change_pct > 0 %}+{% endif %}{{ prediction.lstm.change_pct }}%
+                </span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<div class="chart-container fade-in fade-in-3">
+    <div class="chart-title mb-3"><i class="fas fa-chart-area me-2" style="color:var(--cyan);"></i>Price History + Prediction</div>
+    <canvas id="predChart" height="80"></canvas>
+</div>
+
+{% else %}
+<div class="chart-container" style="text-align:center; padding:60px;">
+    <i class="fas fa-robot" style="font-size:48px; color:#2A3545; margin-bottom:16px;"></i>
+    <p style="color:#888;">Not enough data for prediction. Need at least 15 days of history.</p>
+</div>
+{% endif %}
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% if prediction and stock %}
+<script>
+const dates = {{ stock.chart_dates|safe }};
+const prices = {{ stock.chart_prices|safe }};
+const predLinear = {{ prediction.linear.predicted_price|default:0 }};
+const predLSTM = {{ prediction.lstm.predicted_price|default:0 }};
+
+const predDates = [...dates, 'Tomorrow'];
+const predPrices = [...prices, null];
+const linearLine = [...Array(prices.length).fill(null), predLinear];
+const lstmLine = [...Array(prices.length).fill(null), predLSTM];
+
+const ctx = document.getElementById('predChart').getContext('2d');
+const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+gradient.addColorStop(0, 'rgba(102,252,241,0.15)');
+gradient.addColorStop(1, 'rgba(102,252,241,0)');
+
+new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: predDates,
+        datasets: [
+            {
+                label: 'Historical Price',
+                data: predPrices,
+                borderColor: '#66FCF1',
+                backgroundColor: gradient,
+                borderWidth: 2,
+                pointRadius: 0,
+                fill: true,
+                tension: 0.4,
+            },
+            {
+                label: 'Linear Prediction',
+                data: linearLine,
+                borderColor: '#3B82F6',
+                borderWidth: 2,
+                pointRadius: 6,
+                pointBackgroundColor: '#3B82F6',
+                fill: false,
+                tension: 0,
+            },
+            {
+                label: 'LSTM Prediction',
+                data: lstmLine,
+                borderColor: '#C8A0FF',
+                borderWidth: 2,
+                pointRadius: 6,
+                pointBackgroundColor: '#C8A0FF',
+                fill: false,
+                tension: 0,
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        animation: { duration: 1500 },
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+            legend: { labels: { color: '#888', font: { size: 11 } } },
+            tooltip: {
+                backgroundColor: '#111318',
+                borderColor: '#66FCF1',
+                borderWidth: 1,
+                titleColor: '#66FCF1',
+                bodyColor: '#C5C6C7',
+                callbacks: { label: ctx => ctx.raw ? ` ₹${ctx.raw}` : '' }
+            }
+        },
+        scales: {
+            x: { ticks: { color: '#555', maxTicksLimit: 8 }, grid: { color: 'rgba(42,53,69,0.3)' } },
+            y: { ticks: { color: '#555', callback: v => '₹' + v }, grid: { color: 'rgba(42,53,69,0.3)' } }
+        }
+    }
+});
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,509 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+<style>
+.fade-in { animation: fadeIn 0.6s ease-out forwards; opacity:0; }
+.fade-in-1 { animation-delay:0.1s; }
+.fade-in-2 { animation-delay:0.2s; }
+.fade-in-3 { animation-delay:0.3s; }
+.fade-in-4 { animation-delay:0.4s; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);} }
+
+.chart-toggle-btn {
+    padding: 5px 14px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    border: 1px solid #2A3545;
+    background: transparent;
+    color: #888;
+    transition: all 0.2s;
+}
+.chart-toggle-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+.chart-toggle-btn.active {
+    background: rgba(102,252,241,0.15);
+    border-color: #66FCF1;
+    color: #66FCF1;
+}
+
+.candle-legend {
+    display: flex;
+    gap: 16px;
+    font-size: 11px;
+    margin-top: 10px;
+    align-items: center;
+}
+.candle-legend .dot {
+    width: 10px; height: 10px;
+    border-radius: 2px;
+    display: inline-block;
+    margin-right: 4px;
+}
+</style>
+{% endblock %}
+{% block dash_active %}active{% endblock %}
+
+{% block content %}
+<div class="section-header fade-in fade-in-1">
+    <div style="display:flex; align-items:center; gap:12px;">
+        <a href="{% url 'dashboard' %}" style="color:#888; text-decoration:none; font-size:13px;">
+            <i class="fas fa-arrow-left me-1"></i>Back
+        </a>
+        <div>
+            <h4 style="color:#fff; margin:0; font-size:20px; font-weight:700;">
+                <span style="color:var(--cyan);">{{ stock.symbol }}</span> — {{ stock.name|truncatechars:40 }}
+            </h4>
+            <p style="color:#888; font-size:12px; margin:0;">NSE · Real-time Data</p>
+        </div>
+    </div>
+    <div style="display:flex; gap:8px;">
+        <a href="{% url 'ai_prediction' %}?symbol={{ stock.symbol }}"
+           class="btn-cyan" style="text-decoration:none; font-size:13px;">
+            <i class="fas fa-robot me-1"></i>AI Predict
+        </a>
+        <a href="{% url 'sentiment' %}?symbol={{ stock.symbol }}"
+           class="btn-cyan" style="text-decoration:none; font-size:13px; background:rgba(200,160,255,0.2); color:var(--violet); border:1px solid var(--violet);">
+            <i class="fas fa-newspaper me-1"></i>Sentiment
+        </a>
+    </div>
+</div>
+
+<!-- ── Stat cards ──────────────────────────────────────────────────────────── -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3 fade-in fade-in-1">
+        <div class="stat-card {% if not stock.is_positive %}red-card{% endif %}">
+            <div class="stat-label"><i class="fas fa-tag me-1"></i>Current Price</div>
+            <div class="stat-value text-cyan" style="font-size:28px;">₹{{ stock.price }}</div>
+            <div class="stat-change {% if stock.is_positive %}text-teal{% else %}text-crimson{% endif %}">
+                {% if stock.is_positive %}<i class="fas fa-arrow-up me-1"></i>{% else %}<i class="fas fa-arrow-down me-1"></i>{% endif %}
+                ₹{{ stock.change }} ({{ stock.change_pct }}%)
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 fade-in fade-in-2">
+        <div class="stat-card">
+            <div class="stat-label"><i class="fas fa-arrow-up me-1"></i>Day High</div>
+            <div class="stat-value text-teal">₹{{ stock.high }}</div>
+            <div class="stat-change" style="color:#555;">Today's High</div>
+        </div>
+    </div>
+    <div class="col-md-3 fade-in fade-in-3">
+        <div class="stat-card red-card">
+            <div class="stat-label"><i class="fas fa-arrow-down me-1"></i>Day Low</div>
+            <div class="stat-value text-crimson">₹{{ stock.low }}</div>
+            <div class="stat-change" style="color:#555;">Today's Low</div>
+        </div>
+    </div>
+    <div class="col-md-3 fade-in fade-in-4">
+        <div class="stat-card">
+            <div class="stat-label"><i class="fas fa-chart-bar me-1"></i>Volume</div>
+            <div class="stat-value" style="font-size:18px;">{{ stock.volume|floatformat:0 }}</div>
+            <div class="stat-change text-violet" style="font-size:12px;">Shares Traded</div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Main charts ─────────────────────────────────────────────────────────── -->
+<div class="row g-3 mb-4">
+    <div class="col-md-8 fade-in fade-in-2">
+        <div class="chart-container">
+            <div class="section-header mb-3">
+                <div>
+                    <div class="chart-title">Price Chart — {{ stock.symbol }}</div>
+                    <div style="font-size:11px; color:#888;">1 Month History</div>
+                </div>
+                <div style="display:flex; gap:6px; align-items:center;">
+                    <button class="chart-toggle-btn active" id="btn-line" onclick="switchChart('line')">
+                        <i class="fas fa-chart-line me-1"></i>Line
+                    </button>
+                    <button class="chart-toggle-btn" id="btn-candle" onclick="switchChart('candle')">
+                        <i class="fas fa-chart-bar me-1"></i>Candle
+                    </button>
+                    <span class="indicator-badge ms-2" id="ma20-badge">
+                        <i class="fas fa-chart-line me-1"></i>MA20
+                    </span>
+                </div>
+            </div>
+            <canvas id="priceChart" height="120"></canvas>
+            <!-- Candle legend — only visible in candle mode -->
+            <div class="candle-legend" id="candle-legend" style="display:none;">
+                <span><span class="dot" style="background:#45A29E;"></span><span style="color:#45A29E;">Bullish</span><span style="color:#555; font-size:10px;"> Close &gt; Open</span></span>
+                <span><span class="dot" style="background:#C3073F;"></span><span style="color:#C3073F;">Bearish</span><span style="color:#555; font-size:10px;"> Close &lt; Open</span></span>
+                <span style="color:#555; font-size:10px; margin-left:auto;"><i class="fas fa-info-circle me-1"></i>Wicks = High / Low</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 fade-in fade-in-3">
+        <div class="chart-container" style="height:100%;">
+            <div class="section-header mb-2">
+                <div class="chart-title" style="font-size:14px;">
+                    <i class="fas fa-tachometer-alt me-2" style="color:var(--amber);"></i>RSI
+                </div>
+                <span id="rsi-value" style="font-size:18px; font-weight:700; color:var(--amber);">--</span>
+            </div>
+            <canvas id="rsiChart" height="180"></canvas>
+            <div style="margin-top:12px; display:flex; gap:12px; font-size:11px;">
+                <span style="color:var(--teal);"><i class="fas fa-circle me-1" style="font-size:8px;"></i>Below 30</span>
+                <span style="color:var(--crimson);"><i class="fas fa-circle me-1" style="font-size:8px;"></i>Above 70</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── MA20 + Volume charts ────────────────────────────────────────────────── -->
+<div class="row g-3 fade-in fade-in-3">
+    <div class="col-md-6">
+        <div class="chart-container">
+            <div class="section-title mb-3">
+                <i class="fas fa-chart-area me-2" style="color:var(--blue);"></i>Moving Average (MA20)
+            </div>
+            <canvas id="maChart" height="120"></canvas>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="chart-container">
+            <div class="section-title mb-3">
+                <i class="fas fa-chart-bar me-2" style="color:var(--amber);"></i>Volume History
+            </div>
+            <canvas id="volumeChart" height="120"></canvas>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js 4 (pinned version — must match financial plugin) -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<!-- Luxon + adapter — required by chartjs-chart-financial for time scale -->
+<script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.3.1/dist/chartjs-adapter-luxon.umd.min.js"></script>
+<!-- Financial plugin — registers real CandlestickController -->
+<script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial@0.1.1/dist/chartjs-chart-financial.min.js"></script>
+
+<script>
+// ── Data from Django ──────────────────────────────────────────────────────────
+const dates   = {{ stock.chart_dates_json|safe }};
+const prices  = {{ stock.chart_prices_json|safe }};
+const ma20    = {{ stock.ma20_json|safe }};
+const rsi     = {{ stock.rsi_json|safe }};
+const ohlcRaw = {{ stock.ohlc_json|safe }};
+
+// chartjs-chart-financial needs {x: Unix-ms, o, h, l, c}
+// ohlcRaw uses integer indices — convert to real timestamps counting back from today
+const todayMs    = Date.now();
+const MS_PER_DAY = 86_400_000;
+const candleData = ohlcRaw.map((d, i) => ({
+    x: todayMs - (ohlcRaw.length - 1 - i) * MS_PER_DAY,
+    o: d.o, h: d.h, l: d.l, c: d.c,
+}));
+
+// ── Global Chart.js defaults ──────────────────────────────────────────────────
+Chart.defaults.color       = '#666';
+Chart.defaults.font.family = 'Segoe UI';
+
+const C = {
+    cyan:    '#66FCF1',
+    teal:    '#45A29E',
+    crimson: '#C3073F',
+    blue:    '#3B82F6',
+    amber:   '#F5A623',
+    panel:   '#111318',
+    grid:    'rgba(42,53,69,0.3)',
+};
+
+function mkTooltip(accent) {
+    return {
+        backgroundColor: C.panel,
+        borderColor:     accent,
+        borderWidth: 1,
+        titleColor:  accent,
+        bodyColor:   '#C5C6C7',
+        padding: 10,
+        cornerRadius: 6,
+    };
+}
+
+// ── Y-axis range from OHLC data — THE KEY FIX for flat-candle bug ────────────
+// Without this, Chart.js defaults Y min to 0 and squishes all candles
+// (e.g. ₹1300–1400 range becomes a thin line in a 0–1600 axis).
+function getYRange(data) {
+    const allVals = data.flatMap(d => [d.o, d.h, d.l, d.c]);
+    const lo = Math.min(...allVals);
+    const hi = Math.max(...allVals);
+    const pad = (hi - lo) * 0.08;   // 8% breathing room above + below
+    return { min: Math.floor(lo - pad), max: Math.ceil(hi + pad) };
+}
+
+// ── Price chart state ─────────────────────────────────────────────────────────
+let priceChart  = null;
+let currentMode = 'line';
+
+function switchChart(type) {
+    currentMode = type;
+    document.getElementById('btn-line').classList.toggle('active',   type === 'line');
+    document.getElementById('btn-candle').classList.toggle('active', type === 'candle');
+    document.getElementById('ma20-badge').style.opacity     = type === 'line'   ? '1'    : '0.3';
+    document.getElementById('candle-legend').style.display  = type === 'candle' ? 'flex' : 'none';
+    buildPriceChart(type);
+}
+
+function buildPriceChart(type) {
+    if (priceChart) { priceChart.destroy(); priceChart = null; }
+    const ctx = document.getElementById('priceChart').getContext('2d');
+
+    // ── Line chart ────────────────────────────────────────────────────────────
+    if (type === 'line') {
+        const grad = ctx.createLinearGradient(0, 0, 0, 300);
+        grad.addColorStop(0, 'rgba(102,252,241,0.18)');
+        grad.addColorStop(1, 'rgba(102,252,241,0)');
+
+        priceChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: dates,
+                datasets: [
+                    {
+                        label: 'Price',
+                        data: prices,
+                        borderColor: C.cyan,
+                        backgroundColor: grad,
+                        borderWidth: 2.5,
+                        pointRadius: 0,
+                        pointHoverRadius: 5,
+                        fill: true,
+                        tension: 0.4,
+                    },
+                    {
+                        label: 'MA20',
+                        data: ma20,
+                        borderColor: C.blue,
+                        borderWidth: 1.5,
+                        pointRadius: 0,
+                        fill: false,
+                        tension: 0.4,
+                        borderDash: [6, 3],
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                animation: { duration: 800, easing: 'easeInOutQuart' },
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: { labels: { color: '#888', font: { size: 11 } } },
+                    tooltip: { ...mkTooltip(C.cyan), callbacks: { label: c => ` ₹${c.raw}` } }
+                },
+                scales: {
+                    x: { ticks: { color: '#555', maxTicksLimit: 8 }, grid: { color: C.grid } },
+                    y: { ticks: { color: '#555', callback: v => '₹' + v }, grid: { color: C.grid } }
+                }
+            }
+        });
+
+    // ── Candlestick chart ─────────────────────────────────────────────────────
+    } else {
+        const { min: yMin, max: yMax } = getYRange(ohlcRaw);   // ← tight Y range
+
+        priceChart = new Chart(ctx, {
+            type: 'candlestick',     // registered by chartjs-chart-financial
+            data: {
+                datasets: [{
+                    label: '{{ stock.symbol }}',
+                    data: candleData,    // [{x: timestamp_ms, o, h, l, c}]
+                    color: {
+                        up:        C.teal,
+                        down:      C.crimson,
+                        unchanged: '#888',
+                    },
+                    borderColor: {
+                        up:        C.teal,
+                        down:      C.crimson,
+                        unchanged: '#888',
+                    },
+                }]
+            },
+            options: {
+                responsive: true,
+                animation: { duration: 700, easing: 'easeOutQuart' },
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        ...mkTooltip(C.cyan),
+                        callbacks: {
+                            title: items => {
+                                const d = new Date(items[0].parsed.x);
+                                return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+                            },
+                            label: item => {
+                                const d   = item.raw;
+                                const dir = d.c >= d.o ? '▲ Bullish' : '▼ Bearish';
+                                const chg = (d.c - d.o).toFixed(2);
+                                return [
+                                    `  ${dir}`,
+                                    `  Open:  ₹${d.o}`,
+                                    `  High:  ₹${d.h}`,
+                                    `  Low:   ₹${d.l}`,
+                                    `  Close: ₹${d.c}`,
+                                    `  Chg:   ${d.c >= d.o ? '+' : ''}${chg}`,
+                                ];
+                            },
+                            labelColor: item => {
+                                const col = item.raw.c >= item.raw.o ? C.teal : C.crimson;
+                                return { borderColor: col, backgroundColor: col };
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        type: 'time',
+                        time: {
+                            unit: 'day',
+                            displayFormats: { day: 'dd MMM' },
+                            tooltipFormat:  'dd MMM yyyy',
+                        },
+                        ticks: { color: '#555', maxTicksLimit: 8 },
+                        grid:  { color: C.grid },
+                    },
+                    y: {
+                        min: yMin,   // ← auto-fit to actual price range, not 0
+                        max: yMax,
+                        ticks: { color: '#555', callback: v => '₹' + v },
+                        grid:  { color: C.grid },
+                    }
+                }
+            }
+        });
+    }
+}
+
+// Start on line chart
+buildPriceChart('line');
+
+// ── RSI chart ─────────────────────────────────────────────────────────────────
+(function () {
+    const ctx  = document.getElementById('rsiChart').getContext('2d');
+    const grad = ctx.createLinearGradient(0, 0, 0, 200);
+    grad.addColorStop(0, 'rgba(245,166,35,0.15)');
+    grad.addColorStop(1, 'rgba(245,166,35,0)');
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: dates,
+            datasets: [{
+                data: rsi,
+                borderColor: C.amber,
+                backgroundColor: grad,
+                borderWidth: 2,
+                pointRadius: 0,
+                fill: true,
+                tension: 0.4,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: { ...mkTooltip(C.amber), callbacks: { label: c => ` RSI: ${Number(c.raw).toFixed(1)}` } }
+            },
+            scales: {
+                x: { ticks: { color: '#555', maxTicksLimit: 5 }, grid: { color: C.grid } },
+                y: {
+                    min: 0, max: 100,
+                    ticks: { color: '#555', callback: v => (v === 30 || v === 70 || v === 50) ? v : '' },
+                    grid: {
+                        color:     ctx => ctx.tick.value === 70 ? 'rgba(195,7,63,0.45)' : ctx.tick.value === 30 ? 'rgba(69,162,158,0.45)' : C.grid,
+                        lineWidth: ctx => (ctx.tick.value === 70 || ctx.tick.value === 30) ? 1.5 : 0.5,
+                    }
+                }
+            }
+        }
+    });
+
+    const valid = rsi.filter(v => v !== null);
+    if (valid.length) {
+        const last = valid[valid.length - 1];
+        const el   = document.getElementById('rsi-value');
+        el.textContent = last.toFixed(1);
+        el.style.color = last > 70 ? C.crimson : last < 30 ? C.teal : C.amber;
+    }
+})();
+
+// ── MA20 overlay chart ────────────────────────────────────────────────────────
+new Chart(document.getElementById('maChart').getContext('2d'), {
+    type: 'line',
+    data: {
+        labels: dates,
+        datasets: [
+            {
+                label: 'Price',
+                data: prices,
+                borderColor: C.cyan,
+                borderWidth: 1.5,
+                pointRadius: 0,
+                fill: false,
+                tension: 0.4,
+            },
+            {
+                label: 'MA20',
+                data: ma20,
+                borderColor: C.blue,
+                borderWidth: 2,
+                pointRadius: 0,
+                fill: false,
+                tension: 0.4,
+                borderDash: [5, 3],
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { labels: { color: '#888', font: { size: 10 } } },
+            tooltip: { ...mkTooltip(C.blue), callbacks: { label: c => ` ₹${c.raw}` } }
+        },
+        scales: {
+            x: { ticks: { color: '#555', maxTicksLimit: 6 }, grid: { color: C.grid } },
+            y: { ticks: { color: '#555', callback: v => '₹' + v }, grid: { color: C.grid } }
+        }
+    }
+});
+
+// ── Volume chart (daily range as proxy for volume) ────────────────────────────
+new Chart(document.getElementById('volumeChart').getContext('2d'), {
+    type: 'bar',
+    data: {
+        labels: dates,
+        datasets: [{
+            label: 'High−Low Range',
+            data: ohlcRaw.map(d => parseFloat((d.h - d.l).toFixed(2))),
+            backgroundColor: ohlcRaw.map(d =>
+                d.c >= d.o ? 'rgba(69,162,158,0.35)' : 'rgba(195,7,63,0.35)'
+            ),
+            borderColor: ohlcRaw.map(d =>
+                d.c >= d.o ? C.teal : C.crimson
+            ),
+            borderWidth: 1,
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                ...mkTooltip(C.cyan),
+                callbacks: { label: c => ` Range: ₹${c.raw}` }
+            }
+        },
+        scales: {
+            x: { ticks: { color: '#555', maxTicksLimit: 6 }, grid: { color: C.grid } },
+            y: { ticks: { color: '#555', callback: v => '₹' + v }, grid: { color: C.grid } }
+        }
+    }
+});
+</script>
+{% endblock %}

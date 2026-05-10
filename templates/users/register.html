@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/auth.css' %}">
+<style>
+nav.navbar { display:none !important; }
+.sidebar { display:none !important; }
+.main-content { margin-left:0 !important; margin-top:0 !important; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+    <div class="orb-bg">
+        <div class="floating-orb orb1"></div>
+        <div class="floating-orb orb2"></div>
+    </div>
+
+    <div class="auth-box-wide">
+        <div class="auth-header">
+            <div class="logo-icon">
+                <i class="fas fa-chart-line" style="font-size:28px; color:#0B0C10;"></i>
+            </div>
+            <h1 class="auth-title">Create Account</h1>
+            <p class="auth-subtitle">Join StockAI Pro today</p>
+        </div>
+
+        <div class="glass-card">
+            <form method="POST">
+                {% csrf_token %}
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                    <div class="input-group-custom">
+                        <i class="fas fa-user input-icon"></i>
+                        <input type="text" name="first_name" placeholder="First Name" required class="custom-input">
+                    </div>
+                    <div class="input-group-custom">
+                        <i class="fas fa-user input-icon"></i>
+                        <input type="text" name="last_name" placeholder="Last Name" required class="custom-input">
+                    </div>
+                </div>
+                <div class="input-group-custom">
+                    <i class="fas fa-at input-icon"></i>
+                    <input type="text" name="username" placeholder="Username" required class="custom-input">
+                </div>
+                <div class="input-group-custom">
+                    <i class="fas fa-envelope input-icon"></i>
+                    <input type="email" name="email" placeholder="Email Address" required class="custom-input">
+                </div>
+                <div class="input-group-custom">
+                    <i class="fas fa-lock input-icon"></i>
+                    <input type="password" name="password1" placeholder="Password" required class="custom-input">
+                </div>
+                <div class="input-group-custom">
+                    <i class="fas fa-shield-alt input-icon"></i>
+                    <input type="password" name="password2" placeholder="Confirm Password" required class="custom-input">
+                </div>
+                {% if form.errors %}
+                <div class="error-text">
+                    {% for field in form %}{% for error in field.errors %}{{ error }}<br>{% endfor %}{% endfor %}
+                </div>
+                {% endif %}
+                <button type="submit" class="submit-btn mt-2">
+                    <span>Create Account</span>
+                    <i class="fas fa-arrow-right ms-2"></i>
+                </button>
+            </form>
+
+            <div class="auth-footer">
+                <p>Already have an account? <a href="{% url 'login' %}">Sign In</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

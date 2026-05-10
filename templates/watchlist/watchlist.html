@@ -1,0 +1,675 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Watchlist — StockAI Pro{% endblock %}
+
+{% block watchlist_active %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* ── Watchlist Page Styles ── */
+  .watchlist-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+
+  .watchlist-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .watchlist-title i {
+    color: var(--cyan);
+  }
+
+  .watchlist-subtitle {
+    font-size: 13px;
+    color: #888;
+    margin-top: 2px;
+  }
+
+  /* Add Stock Form Card */
+  .add-stock-card {
+    background: var(--bg-panel);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    border: 1px solid rgba(102,252,241,0.1);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .add-stock-card label {
+    font-size: 13px;
+    color: #888;
+    white-space: nowrap;
+  }
+
+  .add-stock-input-wrap {
+    display: flex;
+    gap: 10px;
+    flex: 1;
+    min-width: 260px;
+  }
+
+  .add-stock-input {
+    flex: 1;
+    background: var(--bg-surface);
+    border: 1px solid rgba(102,252,241,0.2);
+    border-radius: 8px;
+    color: var(--text-main);
+    padding: 10px 16px;
+    font-size: 14px;
+    font-family: 'Segoe UI', sans-serif;
+    outline: none;
+    text-transform: uppercase;
+    transition: border-color 0.2s;
+  }
+
+  .add-stock-input:focus {
+    border-color: var(--cyan);
+  }
+
+  .add-stock-input::placeholder {
+    color: #555;
+    text-transform: none;
+  }
+
+  .btn-add-watch {
+    background: var(--cyan);
+    color: #0B0C10;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 22px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    white-space: nowrap;
+  }
+
+  .btn-add-watch:hover {
+    opacity: 0.88;
+    transform: translateY(-1px);
+  }
+
+  /* Popular chips */
+  .popular-chips {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+  }
+
+  .popular-label {
+    font-size: 11px;
+    color: #666;
+  }
+
+  .chip {
+    background: var(--bg-hover);
+    border: 1px solid rgba(102,252,241,0.15);
+    color: var(--cyan);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+    letter-spacing: 0.5px;
+  }
+
+  .chip:hover {
+    background: rgba(102,252,241,0.12);
+    border-color: var(--cyan);
+  }
+
+  /* Stats bar */
+  .watchlist-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .wl-stat-card {
+    background: var(--bg-panel);
+    border-radius: 10px;
+    padding: 16px 20px;
+    border: 1px solid rgba(255,255,255,0.05);
+  }
+
+  .wl-stat-label {
+    font-size: 11px;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 6px;
+  }
+
+  .wl-stat-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-main);
+  }
+
+  /* Watchlist table card */
+  .watchlist-table-card {
+    background: var(--bg-panel);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.05);
+  }
+
+  .wl-table-header {
+    padding: 18px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .wl-table-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .count-badge {
+    background: rgba(102,252,241,0.12);
+    color: var(--cyan);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 20px;
+  }
+
+  .wl-refresh-btn {
+    background: rgba(102,252,241,0.08);
+    color: var(--cyan);
+    border: 1px solid rgba(102,252,241,0.2);
+    border-radius: 7px;
+    padding: 7px 14px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .wl-refresh-btn:hover {
+    background: rgba(102,252,241,0.16);
+  }
+
+  /* Table */
+  .wl-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .wl-table thead th {
+    padding: 12px 20px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: rgba(0,0,0,0.2);
+    text-align: left;
+  }
+
+  .wl-table thead th:last-child {
+    text-align: center;
+  }
+
+  .wl-table tbody tr {
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    transition: background 0.15s;
+  }
+
+  .wl-table tbody tr:hover {
+    background: var(--bg-hover);
+  }
+
+  .wl-table tbody tr:last-child {
+    border-bottom: none;
+  }
+
+  .wl-table td {
+    padding: 16px 20px;
+    font-size: 14px;
+    color: var(--text-main);
+    vertical-align: middle;
+  }
+
+  .stock-symbol-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .stock-sym {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--cyan);
+    letter-spacing: 0.5px;
+  }
+
+  .stock-name-small {
+    font-size: 11px;
+    color: #666;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+  }
+
+  .price-cell {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-main);
+  }
+
+  .change-positive {
+    color: var(--teal);
+    font-weight: 600;
+    font-size: 13px;
+  }
+
+  .change-negative {
+    color: var(--crimson);
+    font-weight: 600;
+    font-size: 13px;
+  }
+
+  .vol-cell {
+    font-size: 13px;
+    color: #888;
+  }
+
+  .high-low-cell {
+    font-size: 12px;
+    color: #888;
+    line-height: 1.6;
+  }
+
+  .high-low-cell span.hl {
+    font-size: 11px;
+    color: #555;
+    margin-right: 4px;
+  }
+
+  /* Action buttons */
+  .action-btns {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+  }
+
+  .btn-action {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--text-main);
+  }
+
+  .btn-action.view {
+    border-color: rgba(102,252,241,0.2);
+    color: var(--cyan);
+  }
+
+  .btn-action.view:hover {
+    background: rgba(102,252,241,0.1);
+    border-color: var(--cyan);
+  }
+
+  .btn-action.predict {
+    border-color: rgba(200,160,255,0.2);
+    color: var(--violet);
+  }
+
+  .btn-action.predict:hover {
+    background: rgba(200,160,255,0.1);
+    border-color: var(--violet);
+  }
+
+  .btn-action.remove {
+    border-color: rgba(195,7,63,0.25);
+    color: var(--crimson);
+  }
+
+  .btn-action.remove:hover {
+    background: rgba(195,7,63,0.12);
+    border-color: var(--crimson);
+  }
+
+  /* Mini sparkline canvas */
+  .sparkline-canvas {
+    width: 100px;
+    height: 36px;
+    display: block;
+  }
+
+  /* Empty state */
+  .empty-watchlist {
+    text-align: center;
+    padding: 60px 20px;
+  }
+
+  .empty-icon {
+    font-size: 48px;
+    color: #333;
+    margin-bottom: 16px;
+  }
+
+  .empty-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 8px;
+  }
+
+  .empty-subtitle {
+    font-size: 13px;
+    color: #444;
+  }
+
+  /* RSI badge */
+  .rsi-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 4px;
+  }
+
+  .rsi-oversold { background: rgba(69,162,158,0.2); color: var(--teal); }
+  .rsi-overbought { background: rgba(195,7,63,0.2); color: var(--crimson); }
+  .rsi-neutral { background: rgba(245,166,35,0.15); color: var(--amber); }
+
+  /* Messages */
+  .alert-msg {
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .alert-msg.success { background: rgba(69,162,158,0.15); color: var(--teal); border: 1px solid rgba(69,162,158,0.3); }
+  .alert-msg.error { background: rgba(195,7,63,0.15); color: var(--soft-red); border: 1px solid rgba(195,7,63,0.3); }
+  .alert-msg.info { background: rgba(102,252,241,0.08); color: var(--cyan); border: 1px solid rgba(102,252,241,0.2); }
+
+  @media (max-width: 900px) {
+    .watchlist-stats { grid-template-columns: repeat(2, 1fr); }
+    .wl-table td.hide-mobile, .wl-table th.hide-mobile { display: none; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+
+  <!-- Header -->
+  <div class="watchlist-header">
+    <div>
+      <div class="watchlist-title">
+        <i class="fas fa-star"></i>
+        My Watchlist
+      </div>
+      <div class="watchlist-subtitle">Track your favourite NSE/BSE stocks in one place</div>
+    </div>
+  </div>
+
+  <!-- Django messages -->
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert-msg {% if message.tags == 'error' %}error{% elif message.tags == 'success' %}success{% else %}info{% endif %}">
+        <i class="fas fa-{% if message.tags == 'error' %}exclamation-circle{% elif message.tags == 'success' %}check-circle{% else %}info-circle{% endif %}"></i>
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- Add Stock Card -->
+  <div class="add-stock-card">
+    <div style="flex:1; min-width:300px;">
+      <label>Add Stock to Watchlist</label>
+      <form method="POST" action="{% url 'watchlist:add' %}" style="margin-top:8px;">
+        {% csrf_token %}
+        <div class="add-stock-input-wrap">
+          <input
+            type="text"
+            name="symbol"
+            class="add-stock-input"
+            placeholder="Enter NSE symbol (e.g. RELIANCE, TCS)"
+            maxlength="20"
+            autocomplete="off"
+            id="symbolInput"
+          >
+          <button type="submit" class="btn-add-watch">
+            <i class="fas fa-plus"></i> Add
+          </button>
+        </div>
+      </form>
+      <div class="popular-chips" style="margin-top:10px;">
+        <span class="popular-label">Quick Add:</span>
+        {% for sym in popular_symbols %}
+            <span class="chip" onclick="document.getElementById('symbolInput').value='{{ sym }}'">{{ sym }}</span>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats Row -->
+  {% if stocks_data %}
+  <div class="watchlist-stats fade-in-1">
+    {% with gainers=0 losers=0 %}
+    <div class="wl-stat-card">
+      <div class="wl-stat-label">Stocks Tracked</div>
+      <div class="wl-stat-value" style="color:var(--cyan);">{{ stocks_data|length }}</div>
+    </div>
+    <div class="wl-stat-card">
+      <div class="wl-stat-label">Gainers Today</div>
+      <div class="wl-stat-value" style="color:var(--teal);" id="gainerCount">—</div>
+    </div>
+    <div class="wl-stat-card">
+      <div class="wl-stat-label">Losers Today</div>
+      <div class="wl-stat-value" style="color:var(--crimson);" id="loserCount">—</div>
+    </div>
+    <div class="wl-stat-card">
+      <div class="wl-stat-label">Avg. Change</div>
+      <div class="wl-stat-value" id="avgChange">—</div>
+    </div>
+    {% endwith %}
+  </div>
+  {% endif %}
+
+  <!-- Watchlist Table -->
+  <div class="watchlist-table-card fade-in-2">
+    <div class="wl-table-header">
+      <div class="wl-table-title">
+        <i class="fas fa-list" style="color:var(--cyan);font-size:14px;"></i>
+        Watchlist
+        <span class="count-badge">{{ watchlist_items.count }} stocks</span>
+      </div>
+      <button class="wl-refresh-btn" onclick="location.reload()">
+        <i class="fas fa-sync-alt"></i> Refresh Prices
+      </button>
+    </div>
+
+    {% if stocks_data %}
+    <div style="overflow-x:auto;">
+      <table class="wl-table">
+        <thead>
+          <tr>
+            <th>Symbol</th>
+            <th>Price</th>
+            <th>Change</th>
+            <th class="hide-mobile">Day High / Low</th>
+            <th class="hide-mobile">Volume</th>
+            <th class="hide-mobile">Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for stock in stocks_data %}
+          {% for item in watchlist_items %}
+          {% if item.symbol == stock.symbol %}
+          <tr>
+            <!-- Symbol -->
+            <td>
+              <div class="stock-symbol-cell">
+                <span class="stock-sym">{{ stock.symbol }}</span>
+                <span class="stock-name-small">{{ stock.name }}</span>
+              </div>
+            </td>
+
+            <!-- Price -->
+            <td>
+              <span class="price-cell">₹{{ stock.price|floatformat:1 }}</span>
+            </td>
+
+            <!-- Change -->
+            <td>
+              {% if stock.is_positive %}
+                <span class="change-positive">
+                  <i class="fas fa-caret-up"></i>
+                  ₹{{ stock.change|floatformat:2 }} ({{ stock.change_pct|floatformat:2 }}%)
+                </span>
+              {% else %}
+                <span class="change-negative">
+                  <i class="fas fa-caret-down"></i>
+                  ₹{{ stock.change|floatformat:2 }} ({{ stock.change_pct|floatformat:2 }}%)
+                </span>
+              {% endif %}
+            </td>
+
+            <!-- High / Low -->
+            <td class="hide-mobile">
+              <div class="high-low-cell">
+                <span class="hl">H</span>₹{{ stock.high|floatformat:1 }}<br>
+                <span class="hl">L</span>₹{{ stock.low|floatformat:1 }}
+              </div>
+            </td>
+
+            <!-- Volume -->
+            <td class="hide-mobile">
+              <span class="vol-cell">{{ stock.volume|floatformat:0 }}</span>
+            </td>
+
+            <!-- Status badge based on change -->
+            <td class="hide-mobile">
+              {% if stock.change_pct > 2 %}
+                <span class="rsi-badge rsi-oversold">Bullish</span>
+              {% elif stock.change_pct < -2 %}
+                <span class="rsi-badge rsi-overbought">Bearish</span>
+              {% else %}
+                <span class="rsi-badge rsi-neutral">Neutral</span>
+              {% endif %}
+            </td>
+
+            <!-- Actions -->
+            <td>
+              <div class="action-btns">
+                <a href="{% url 'dashboard:stock_detail' stock.symbol %}" class="btn-action view" title="View Chart">
+                  <i class="fas fa-chart-line"></i>
+                </a>
+                <a href="{% url 'ai_prediction:prediction' %}?symbol={{ stock.symbol }}" class="btn-action predict" title="AI Predict">
+                  <i class="fas fa-robot"></i>
+                </a>
+                <form method="POST" action="{% url 'watchlist:remove' item.pk %}" style="display:inline;" onsubmit="return confirm('Remove {{ stock.symbol }} from watchlist?')">
+                  {% csrf_token %}
+                  <button type="submit" class="btn-action remove" title="Remove">
+                    <i class="fas fa-trash-alt"></i>
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endif %}
+          {% endfor %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% elif watchlist_items.count == 0 %}
+    <!-- Empty state: no stocks added yet -->
+    <div class="empty-watchlist">
+      <div class="empty-icon"><i class="fas fa-star-half-alt"></i></div>
+      <div class="empty-title">Your watchlist is empty</div>
+      <div class="empty-subtitle">Add NSE/BSE stock symbols above to start tracking them here.</div>
+    </div>
+
+    {% else %}
+    <!-- Stocks in DB but data fetch failed -->
+    <div class="empty-watchlist">
+      <div class="empty-icon"><i class="fas fa-exclamation-triangle"></i></div>
+      <div class="empty-title">Could not load live prices</div>
+      <div class="empty-subtitle">Yahoo Finance may be unavailable. Try refreshing in a moment.</div>
+      <div style="margin-top:16px;">
+        {% for item in watchlist_items %}
+          <span style="display:inline-block;background:var(--bg-hover);color:var(--cyan);font-size:12px;font-weight:700;padding:5px 12px;border-radius:20px;margin:4px;">
+            {{ item.symbol }}
+          </span>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Compute stats from stocks data
+  const stocksData = {{ stocks_json|safe }};
+
+  if (stocksData.length > 0) {
+    const gainers = stocksData.filter(s => s.is_positive).length;
+    const losers  = stocksData.length - gainers;
+    const avgChg  = stocksData.reduce((a, s) => a + (s.change_pct || 0), 0) / stocksData.length;
+
+    const gEl = document.getElementById('gainerCount');
+    const lEl = document.getElementById('loserCount');
+    const aEl = document.getElementById('avgChange');
+
+    if (gEl) gEl.textContent = gainers;
+    if (lEl) lEl.textContent = losers;
+    if (aEl) {
+      aEl.textContent = (avgChg >= 0 ? '+' : '') + avgChg.toFixed(2) + '%';
+      aEl.style.color = avgChg >= 0 ? 'var(--teal)' : 'var(--crimson)';
+    }
+  }
+
+  // Chip click → focus input
+  document.querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.getElementById('symbolInput').focus();
+    });
+  });
+</script>
+{% endblock %}

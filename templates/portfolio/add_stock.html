@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/auth.css' %}">
+{% endblock %}
+{% block port_active %}active{% endblock %}
+
+{% block content %}
+<div style="max-width:500px; margin:40px auto;">
+    <div class="card-dark">
+        <h4 style="color:var(--cyan); margin-bottom:4px;"><i class="fas fa-plus me-2"></i>Add Stock</h4>
+        <p style="color:#888; font-size:13px; margin-bottom:24px;">Add a stock to your portfolio</p>
+
+        <form method="POST">
+            {% csrf_token %}
+            <div class="input-group-custom mb-3">
+                <i class="fas fa-search input-icon"></i>
+                <input type="text" name="symbol" placeholder="Stock Symbol (e.g. TCS, RELIANCE)" required class="custom-input" style="text-transform:uppercase;">
+            </div>
+            <div class="input-group-custom mb-3">
+                <i class="fas fa-sort-numeric-up input-icon"></i>
+                <input type="number" name="quantity" placeholder="Quantity" required class="custom-input" step="0.01" min="0.01">
+            </div>
+            <div class="input-group-custom mb-3">
+                <i class="fas fa-rupee-sign input-icon"></i>
+                <input type="number" name="buy_price" placeholder="Buy Price (₹)" required class="custom-input" step="0.01" min="0.01">
+            </div>
+            <div class="input-group-custom mb-4">
+                <i class="fas fa-calendar input-icon"></i>
+                <input type="date" name="buy_date" required class="custom-input">
+            </div>
+            <button type="submit" class="submit-btn">
+                <i class="fas fa-plus me-2"></i>Add to Portfolio
+            </button>
+            <a href="{% url 'portfolio' %}" style="display:block; text-align:center; margin-top:16px; color:#888; font-size:13px; text-decoration:none;">
+                Cancel
+            </a>
+        </form>
+    </div>
+</div>
+{% endblock %}
