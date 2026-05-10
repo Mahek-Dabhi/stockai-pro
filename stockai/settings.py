@@ -13,6 +13,7 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-local-dev-key-change-in-pr
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = ['*']  # Render URL will be auto-allowed
+CSRF_TRUSTED_ORIGINS = ['https://stockai-pro-3u7v.onrender.com']
 
 # ── Apps ──────────────────────────────────────────────────────────────────────
 INSTALLED_APPS = [
