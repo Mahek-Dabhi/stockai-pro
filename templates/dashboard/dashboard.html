@@ -421,7 +421,7 @@ function updateMarketOverlay(isPositive) {
 }
 
 // ── Auto-refresh stock data every 45 seconds ──────────────────────────────
-const AUTO_REFRESH_INTERVAL = 45000;
+const AUTO_REFRESH_INTERVAL = 86400000; // 24 hours — disabled effectively
 const FEATURED_SYMBOL = '{{ featured.symbol }}';
 const SYMBOLS = {{ stocks|safe }}.map(s => s.symbol);
 

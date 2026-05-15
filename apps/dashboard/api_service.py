@@ -5,14 +5,15 @@ from datetime import datetime
 import pytz
 
 # ── Alpha Vantage API ─────────────────────────────────────────────────────────
-# Free tier: 25 requests/day, works on all cloud servers, supports BSE/NSE
 ALPHA_KEY = os.getenv('ALPHA_VANTAGE_KEY', '')
 BASE_URL   = 'https://www.alphavantage.co/query'
 
-# ── 5-minute in-memory cache ──────────────────────────────────────────────────
-# Each stock cached for 5 minutes — stays well within 25 req/day free limit
-_cache   = {}
-CACHE_TTL = 300  # seconds
+# ── 24-hour cache ─────────────────────────────────────────────────────────────
+# Alpha Vantage free = 25 requests/day
+# 6 stocks × 1 fetch/day = 6 requests → well within limit
+# Cache persists in memory for the lifetime of the server process
+_cache    = {}
+CACHE_TTL = 86400  # 24 hours in seconds
 
 def _cache_get(key):
     if key in _cache:
@@ -47,7 +48,6 @@ DEFAULT_STOCKS = [
     'WIPRO',
 ]
 
-# Company display names (Alpha Vantage daily endpoint has no name field)
 NAME_MAP = {
     'RELIANCE':  'Reliance Industries Limited',
     'TCS':       'Tata Consultancy Services',
@@ -63,15 +63,16 @@ NAME_MAP = {
 def get_stock_data(symbol):
     """
     Fetch live + 30-day historical data via Alpha Vantage.
-    Caches each stock for 5 minutes to stay within free tier limits.
+    Cached for 24 hours — uses only 6 API calls per day for 6 stocks.
+    Free tier limit: 25 requests/day.
     """
-    # Return cached data if fresh
     cached = _cache_get(symbol)
     if cached:
+        print(f"[api_service] Cache hit for {symbol}")
         return cached
 
-    # Alpha Vantage Indian stock format: SYMBOL.BSE
     av_symbol = f"{symbol}.BSE"
+    print(f"[api_service] Fetching fresh data for {symbol}...")
 
     try:
         r = requests.get(BASE_URL, params={
@@ -86,17 +87,20 @@ def get_stock_data(symbol):
         if 'Error Message' in data:
             print(f"[api_service] Symbol not found: {symbol}")
             return None
+
         if 'Note' in data or 'Information' in data:
-            msg = data.get('Note') or data.get('Information', '')
-            print(f"[api_service] Rate limit for {symbol}: {msg[:60]}")
+            # Rate limited — return stale cache if available (ignore TTL)
+            if symbol in _cache:
+                print(f"[api_service] Rate limited — serving stale cache for {symbol}")
+                return _cache[symbol][0]
+            print(f"[api_service] Rate limited and no cache for {symbol}")
             return None
 
         time_series = data.get('Time Series (Daily)', {})
         if not time_series:
-            print(f"[api_service] No data for {symbol}")
+            print(f"[api_service] No time series for {symbol}")
             return None
 
-        # Sort oldest → newest
         sorted_dates = sorted(time_series.keys())
         recent_dates = sorted_dates[-30:]
         latest_date  = sorted_dates[-1]
@@ -155,10 +159,14 @@ def get_stock_data(symbol):
         }
 
         _cache_set(symbol, result)
+        print(f"[api_service] Cached {symbol} for 24 hours")
         return result
 
     except Exception as e:
         print(f"[api_service] Error fetching {symbol}: {e}")
+        # Return stale cache if available
+        if symbol in _cache:
+            return _cache[symbol][0]
         return None
 
 
